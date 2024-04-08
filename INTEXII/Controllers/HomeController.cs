@@ -7,15 +7,18 @@ namespace INTEXII.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private BrickwellContext context { get; set; }
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, BrickwellContext con = null)
         {
             _logger = logger;
+            context = con;
         }
 
         public IActionResult Index()
         {
-            return View();
+            var products = context.Products.ToList();
+            return View(products);
         }
 
         public IActionResult About()
@@ -31,6 +34,11 @@ namespace INTEXII.Controllers
         public IActionResult Privacy()
         {
             return View();
+        }
+        public IActionResult Products()
+        {
+            var products = context.Products.ToList();
+            return View(products);
         }
 
     }

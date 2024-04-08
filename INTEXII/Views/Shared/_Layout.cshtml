@@ -40,7 +40,7 @@
     <header id="header" class="header d-flex align-items-center fixed-top">
         <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
 
-            <a href="index.html" class="logo d-flex align-items-center">
+            <a class="logo d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
                 <!-- Uncomment the line below if you also wish to use an image logo -->
                 <img src="~/ZenBlog/assets/img/newlogo.jpg" alt="">
                 <h1>AuroraBricks</h1>
@@ -73,6 +73,7 @@
 
                     <li><a asp-controller="Home" asp-action="About">About</a></li>
                     <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
+                    <li><a asp-controller="Home" asp-action="Products">Products</a></li>
                 </ul>
             </nav><!-- .navbar -->
 
