@@ -35,6 +35,11 @@ namespace INTEXII.Controllers
         {
             return View();
         }
+        public IActionResult Products()
+        {
+            var products = context.Products.ToList();
+            return View(products);
+        }
 
     }
 }

@@ -7,38 +7,6 @@
 <html lang="en">
 
 <body>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Product Name</th>
-                <th>Year</th>
-                <th>Number of Parts</th>
-                <th>Price</th>
-                <th>Primary Color</th>
-                <th>Secondary Color</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Image</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var product in Model)
-            {
-                <tr>
-                    <td>@product.Name</td>
-                    <td>@product.Year</td>
-                    <td>@product.NumParts</td>
-                    <td>@product.Price</td>
-                    <td>@product.PrimaryColor</td>
-                    <td>@product.SecondaryColor</td>
-                    <td>@product.Category</td>
-                    <td>@product.Description</td>
-                    <td><img src="@product.ImgLink" alt="Image" /></td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
     <!-- ======= Header ======= -->
 
     <main id="main">
