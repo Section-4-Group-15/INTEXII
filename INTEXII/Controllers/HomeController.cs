@@ -51,7 +51,7 @@ namespace INTEXII.Controllers
             if (categories != null && categories.Count > 0)
             {
                 // Filter products based on selected categories
-                query = query.Where(p => categories.Contains(p.Category1)).OrderBy(x => x.Name);
+                query = query.Where(p => categories.Contains(p.Category_1)).OrderBy(x => x.Name);
             }
 
             var model = new ProjectsListViewModel

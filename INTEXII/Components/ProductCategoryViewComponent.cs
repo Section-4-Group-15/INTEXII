@@ -13,7 +13,7 @@ namespace INTEXII.Components
         public IViewComponentResult Invoke()
         {
             var categoryTypes = _brickwellContext.Products
-                .Select(x => x.Category1)
+                .Select(x => x.Category_1)
                 .Distinct()
                 .OrderBy(x => x);
 
