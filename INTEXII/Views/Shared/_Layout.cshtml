@@ -42,7 +42,10 @@
             <!-- Center of Navbar -->
             <nav id="navbar" class="navbar">
                 <ul>
-                    <li><a href="index.html">Blog</a></li>
+                    <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li><a asp-controller="Home" asp-action="Products">Products</a></li>
+                    <li><a asp-controller="Home" asp-action="About">About</a></li>
+
                     <li><a href="single-post.html">Single Post</a></li>
                     <li class="dropdown">
                         <a href="category.html"><span>Categories</span> <i class="bi bi-chevron-down dropdown-indicator"></i></a>
@@ -65,9 +68,7 @@
                         </ul>
                     </li>
 
-                    <li><a asp-controller="Home" asp-action="About">About</a></li>
                     <li><a asp-controller="Home" asp-action="Contact">Contact</a></li>
-                    <li><a asp-controller="Home" asp-action="Products">Products</a></li>
                     <partial name="_LoginPartial" />
                 </ul>
             </nav>
@@ -86,7 +87,7 @@
                         <button class="btn js-search-close"><span class="bi-x"></span></button>
                     </form>
                 </div><!-- End Search Form -->
-
+                
             </div>
 
         </div>
@@ -95,7 +96,9 @@
     <div class="container">
         <main role="main" class="pb-3">
             <div class="container content-below-nav">
-                @RenderBody()
+                <main id="main">
+                    @RenderBody()
+                </main>
             </div>
         </main>
     </div>
