@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using INTEXII.Models;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,20 +21,28 @@ else
 builder.Services.AddDbContext<BrickwellContext>(options =>
     options.UseSqlServer(connection));
 
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<BrickwellContext>();
+
+// Build the app
 var app = builder.Build();
 
-//Connect the database
-
-
 // Configure the HTTP request pipeline.
+app.UseHttpsRedirection();
+app.UseHsts();
+
 if (!app.Environment.IsDevelopment())
 {
+    // Production settings
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    // Production settings
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// App Configuration
 app.UseStaticFiles();
 
 app.UseRouting();

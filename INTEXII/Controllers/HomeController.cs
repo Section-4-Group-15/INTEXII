@@ -40,6 +40,10 @@ namespace INTEXII.Controllers
             var products = context.Products.ToList();
             return View(products);
         }
+        public IActionResult Error()
+        {
+            return View();
+        }
 
     }
 }
