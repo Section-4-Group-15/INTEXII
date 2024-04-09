@@ -41,35 +41,46 @@ namespace INTEXII.Controllers
         public IActionResult Products(int pageNum, List<string> categories)
         {
             int pageSize = 5;
-
-            // Ensure pageNum is at least 1 to avoid negative offset
             pageNum = Math.Max(1, pageNum);
 
-            // Start with the base query
-            IQueryable<Product> query = context.Products.OrderBy(x => x.Name);
+            // Adjusted query to perform an inner join with ProductCategories and Categories
+            var query = from p in context.Products
+                        join pc in context.ProductCategories on p.ProductId equals pc.ProductId
+                        join c in context.Categories on pc.CategoryId equals c.CategoryId
+                        select new { Product = p, CategoryDescription = c.CategoryDescription };
 
             if (categories != null && categories.Count > 0)
             {
-                // Filter products based on selected categories
-                query = query.Where(p => categories.Contains(p.Category)).OrderBy(x => x.Name);
+                // Assuming categories contains category descriptions
+                query = query.Where(p => categories.Contains(p.CategoryDescription));
             }
 
-            var model = new ProjectsListViewModel
-            {
-                Products = query.Skip((pageNum - 1) * pageSize)
-                                .Take(pageSize)
-                                .ToList(),
+            var productsWithCategories = query
+                                         .OrderBy(x => x.Product.Name)
+                                         .Skip((pageNum - 1) * pageSize)
+                                         .Take(pageSize)
+                                         .ToList()
+                                         .Select(x => new ProductViewModel
+                                         {
+                                             Product = x.Product,
+                                             CategoryDescription = x.CategoryDescription
+                                         });
 
+            var model = new ProductsListViewModel
+            {
+                Products = productsWithCategories,
                 PaginationInfo = new PaginationInfo
                 {
                     CurrentPage = pageNum,
                     ItemsPerPage = pageSize,
-                    TotalItems = query.Count()
+                    TotalItems = query.Count() // Adjust this count as necessary
                 }
             };
 
             return View(model);
         }
+
+
 
 
         public IActionResult Error()

@@ -1,9 +1,16 @@
 ﻿
 namespace INTEXII.Models.ViewModels
 {
-    public class ProjectsListViewModel
+    public class ProductViewModel
     {
-        public List<Product> Products { get; set; }
-        public PaginationInfo PaginationInfo { get; set; } = new PaginationInfo();
+        public Product Product { get; set; }
+        public string CategoryDescription { get; set; }
     }
+
+    public class ProductsListViewModel
+    {
+        public IEnumerable<ProductViewModel> Products { get; set; }
+        public PaginationInfo PaginationInfo { get; set; }
+    }
+
 }
