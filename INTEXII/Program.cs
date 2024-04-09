@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using INTEXII.Models;
 using Microsoft.AspNetCore.Identity;
-using INTEXII.Areas.Identity.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
