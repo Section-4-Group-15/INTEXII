@@ -2,6 +2,7 @@ using INTEXII.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Diagnostics;
+using INTEXII.Models.ViewModels;
 
 namespace INTEXII.Controllers
 {
@@ -37,15 +38,35 @@ namespace INTEXII.Controllers
             return View();
         }
         [Authorize]
-        public IActionResult Products()
+        public IActionResult Products(int pageNum)
         {
-            var products = context.Products.ToList();
-            return View(products);
+            int pageSize = 5;
+
+            // Ensure pageNum is at least 1 to avoid negative offset
+            pageNum = Math.Max(1, pageNum);
+
+            var query = context.Products.OrderBy(x => x.Name);
+
+            var blah = new ProjectsListViewModel
+            {
+                Products = query.Skip((pageNum - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToList(),
+
+                PaginationInfo = new PaginationInfo
+                {
+                    CurrentPage = pageNum,
+                    ItemsPerPage = pageSize,
+                    TotalItmes = query.Count()
+                }
+            };
+
+            return View(blah);
         }
         public IActionResult Error()
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View();
         }
-
     }
+
 }
