@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace INTEXII.Models;
 
-public partial class BrickwellContext : DbContext
+public partial class BrickwellContext : IdentityDbContext<IdentityUser>
 {
     public BrickwellContext()
     {
@@ -25,6 +27,8 @@ public partial class BrickwellContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.Property(e => e.CustomerId)

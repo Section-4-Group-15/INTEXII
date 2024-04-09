@@ -1298,3 +1298,11 @@ section {
         .footer .credits a {
             color: var(--color-white);
         }
+
+
+/*--------------------------------------------------------------
+    # Custom Styles
+*/
+.content-below-nav {
+    padding-top: 400px;
+}

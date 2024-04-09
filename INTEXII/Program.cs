@@ -1,10 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using INTEXII.Models;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-builder.Services.AddControllersWithViews();
 
 var connection = String.Empty;
 if (builder.Environment.IsDevelopment())
@@ -20,28 +18,62 @@ else
 builder.Services.AddDbContext<BrickwellContext>(options =>
     options.UseSqlServer(connection));
 
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+{
+    // Sign-in settings
+    options.SignIn.RequireConfirmedAccount = true;
+
+    // Password settings
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+
+    // Lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    // User settings
+    options.User.RequireUniqueEmail = true;
+})
+    .AddEntityFrameworkStores<BrickwellContext>();
+
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+// Build the app
 var app = builder.Build();
 
-//Connect the database
-
-
 // Configure the HTTP request pipeline.
+app.UseHttpsRedirection();
+app.UseHsts();
+
 if (!app.Environment.IsDevelopment())
 {
+    // Production settings
+    app.UseDeveloperExceptionPage();
+}
+else
+{
+    // Production settings
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// App Configuration
 app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapRazorPages();
 
 app.Run();

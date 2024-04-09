@@ -1,5 +1,6 @@
 using INTEXII.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Diagnostics;
 
 namespace INTEXII.Controllers
@@ -35,10 +36,15 @@ namespace INTEXII.Controllers
         {
             return View();
         }
+        [Authorize]
         public IActionResult Products()
         {
             var products = context.Products.ToList();
             return View(products);
+        }
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
     }
