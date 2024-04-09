@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using INTEXII.Models;
 using Microsoft.AspNetCore.Identity;
+using INTEXII.Areas.Identity.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +22,26 @@ else
 builder.Services.AddDbContext<BrickwellContext>(options =>
     options.UseSqlServer(connection));
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<IdentityUser>(options =>
+{
+    // Sign-in settings
+    options.SignIn.RequireConfirmedAccount = true;
+
+    // Password settings
+    options.Password.RequireDigit = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireLowercase = true;
+
+    // Lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
+
+    // User settings
+    options.User.RequireUniqueEmail = true;
+})
     .AddEntityFrameworkStores<BrickwellContext>();
 
 // Build the app
