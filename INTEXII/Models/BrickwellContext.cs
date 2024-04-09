@@ -24,6 +24,8 @@ public partial class BrickwellContext : IdentityDbContext<IdentityUser>
     public virtual DbSet<Order> Orders { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
+    public virtual DbSet<Category> Categories { get; set; }
+    public virtual DbSet<ProductCategory> ProductCategories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,9 +100,6 @@ public partial class BrickwellContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<Product>(entity =>
         {
             entity.Property(e => e.ProductId).HasColumnName("product_ID");
-            entity.Property(e => e.Category)
-                .HasMaxLength(50)
-                .HasColumnName("category");
             entity.Property(e => e.Description)
                 .HasMaxLength(2800)
                 .HasColumnName("description");

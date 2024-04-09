@@ -23,5 +23,4 @@ public partial class Product
 
     public string? Description { get; set; }
 
-    public string? Category { get; set; }
 }
