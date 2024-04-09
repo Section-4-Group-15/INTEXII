@@ -98,9 +98,6 @@ public partial class BrickwellContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<Product>(entity =>
         {
             entity.Property(e => e.ProductId).HasColumnName("product_ID");
-            entity.Property(e => e.Category)
-                .HasMaxLength(50)
-                .HasColumnName("category");
             entity.Property(e => e.Description)
                 .HasMaxLength(2800)
                 .HasColumnName("description");
