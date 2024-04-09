@@ -38,16 +38,23 @@ namespace INTEXII.Controllers
             return View();
         }
         [Authorize]
-        public IActionResult Products(int pageNum)
+        public IActionResult Products(int pageNum, List<string> categories)
         {
             int pageSize = 5;
 
             // Ensure pageNum is at least 1 to avoid negative offset
             pageNum = Math.Max(1, pageNum);
 
-            var query = context.Products.OrderBy(x => x.Name);
+            // Start with the base query
+            IQueryable<Product> query = context.Products.OrderBy(x => x.Name);
 
-            var blah = new ProjectsListViewModel
+            if (categories != null && categories.Count > 0)
+            {
+                // Filter products based on selected categories
+                query = query.Where(p => categories.Contains(p.Category)).OrderBy(x => x.Name);
+            }
+
+            var model = new ProjectsListViewModel
             {
                 Products = query.Skip((pageNum - 1) * pageSize)
                                 .Take(pageSize)
@@ -57,12 +64,14 @@ namespace INTEXII.Controllers
                 {
                     CurrentPage = pageNum,
                     ItemsPerPage = pageSize,
-                    TotalItmes = query.Count()
+                    TotalItems = query.Count()
                 }
             };
 
-            return View(blah);
+            return View(model);
         }
+
+
         public IActionResult Error()
         {
             return View();

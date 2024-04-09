@@ -1,0 +1,22 @@
+﻿@using Microsoft.AspNetCore.Http
+
+@{
+    // Retrieve the categories from the request query parameters
+}
+
+<div class="filter-box border rounded p-3" style="width: 300px;">
+    <!-- Adjust width as needed -->
+    <h5>Categories:</h5>
+    <form asp-controller="Home" asp-action="Products" method="get">
+
+        @foreach (string cat in Model ?? Enumerable.Empty<string>())
+        {
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="@cat" name="categories" value="@cat" />
+                <label class="form-check-label" for="@cat">@cat</label>
+            </div>
+        }
+        <button type="submit" class="btn btn-primary">Apply Filter</button>
+    </form>
+</div>
+
