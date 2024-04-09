@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace INTEXII.Models;
 
 public partial class Order
 {
+    [Key]
     public long TransactionId { get; set; }
-
+    
     public long CustomerId { get; set; }
 
     public DateOnly? Date { get; set; }

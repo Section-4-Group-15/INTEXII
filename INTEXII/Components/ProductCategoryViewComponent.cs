@@ -6,14 +6,14 @@ namespace INTEXII.Components
     public class ProductCategoryViewComponent : ViewComponent
     {
         private BrickwellContext _brickwellContext;
-        public ProductCategoryViewComponent(BrickwellContext temp) 
+        public ProductCategoryViewComponent(BrickwellContext temp)
         {
             _brickwellContext = temp;
         }
         public IViewComponentResult Invoke()
         {
-            var categoryTypes = _brickwellContext.Categories
-                .Select(x => x.CategoryDescription)
+            var categoryTypes = _brickwellContext.Products
+                .Select(x => x.Category1)
                 .Distinct()
                 .OrderBy(x => x);
 

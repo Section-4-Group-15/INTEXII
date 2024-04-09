@@ -38,58 +38,38 @@ namespace INTEXII.Controllers
             return View();
         }
         [Authorize]
-        public IActionResult Products(int pageNum = 1, List<string>? categoryDescriptions = null)
+        public IActionResult Products(int pageNum, List<string> categories)
         {
             int pageSize = 5;
+
+            // Ensure pageNum is at least 1 to avoid negative offset
             pageNum = Math.Max(1, pageNum);
 
-            // Start with the base query for products and include category descriptions through a join
-            var query = from p in context.Products
-                        join pc in context.ProductCategories on p.ProductId equals pc.ProductId
-                        join c in context.Categories on pc.CategoryId equals c.CategoryId
-                        select new
-                        {
-                            Product = p,
-                            CategoryDescription = c.CategoryDescription
-                        };
+            // Start with the base query
+            IQueryable<Product> query = context.Products.OrderBy(x => x.Name);
 
-            // If category filters are applied
-            if (categoryDescriptions != null && categoryDescriptions.Any())
+            if (categories != null && categories.Count > 0)
             {
-                query = query.Where(p => categoryDescriptions.Contains(p.CategoryDescription));
+                // Filter products based on selected categories
+                query = query.Where(p => categories.Contains(p.Category1)).OrderBy(x => x.Name);
             }
-
-            // Pagination
-            //var totalItems = query.Count();
-            var totalItems = 10;
-            var paginatedQuery = query
-                                 .OrderBy(x => x.Product.Name)
-                                 .Skip((pageNum - 1) * pageSize)
-                                 .Take(pageSize)
-                                 .ToList();
-
-            var productsWithCategories = paginatedQuery.ToDictionary(
-                key => key.Product,
-                value => value.CategoryDescription
-            );
 
             var model = new ProjectsListViewModel
             {
-                Products = productsWithCategories.Keys.ToList(),
+                Products = query.Skip((pageNum - 1) * pageSize)
+                                .Take(pageSize)
+                                .ToList(),
+
                 PaginationInfo = new PaginationInfo
                 {
                     CurrentPage = pageNum,
                     ItemsPerPage = pageSize,
-                    TotalItems = totalItems
+                    TotalItems = query.Count()
                 }
             };
 
-            // Pass category descriptions to the view via ViewBag or ViewData
-            ViewBag.Categories = productsWithCategories;
-
             return View(model);
         }
-
 
 
         public IActionResult Error()
