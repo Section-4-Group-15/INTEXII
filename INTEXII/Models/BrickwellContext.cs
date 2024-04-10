@@ -26,4 +26,7 @@ public partial class BrickwellContext : IdentityDbContext<IdentityUser>
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<CustomerUser> CustomerUsers { get; set; }
+
+
+
 }

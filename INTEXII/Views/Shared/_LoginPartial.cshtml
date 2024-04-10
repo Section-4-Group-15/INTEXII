@@ -8,6 +8,12 @@
     <li>
         <a id="manage" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @UserManager.GetUserName(User)!</a>
     </li>
+    @if (User.IsInRole("Admin"))
+    {
+        <li>
+            Admin Dashboard
+        </li>
+    }
     <li>
         <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
             <button id="logout" type="submit" class="btn btn-link text-dark">Logout</button>
@@ -19,3 +25,4 @@ else
     <li><a id="register" asp-area="Identity" asp-page="/Account/Register">Register</a></li>
     <li><a id="login" asp-area="Identity" asp-page="/Account/Login">Login</a></li>
 }
+
