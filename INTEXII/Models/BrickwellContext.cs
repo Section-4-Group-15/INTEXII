@@ -30,4 +30,5 @@ public partial class BrickwellContext : IdentityDbContext<IdentityUser>
     public virtual DbSet<UserRec> UserRecs { get; set; }
 
     public virtual DbSet<ProductRec> ProductRecs { get; set; }
+    public virtual DbSet<CartProduct> CartProducts { get; set; }
 }

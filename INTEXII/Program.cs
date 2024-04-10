@@ -18,7 +18,13 @@ else
 }
 
 builder.Services.AddDbContext<BrickwellContext>(options =>
-    options.UseSqlServer(connection));
+    options.UseSqlServer(connection, sqlServerOptions =>
+    {
+        sqlServerOptions.EnableRetryOnFailure(
+            maxRetryCount: 10,
+            maxRetryDelay: TimeSpan.FromSeconds(45),
+            errorNumbersToAdd: null);
+    }));
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
 {

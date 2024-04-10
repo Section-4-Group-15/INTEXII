@@ -90,78 +90,125 @@ namespace INTEXII.Controllers
         }
 
         public IActionResult Products(int pageNum, List<string> categories, List<string> colors)
+
         {
+
             var pageSize = 6; // Set page size
+
             // Ensure pageNum is at least 1 to avoid negative offset
+
             pageNum = Math.Max(1, pageNum);
 
             // Fetch distinct categories from Category_1
+
             var categories1 = context.Products
-                .Where(p => !string.IsNullOrEmpty(p.Category_1))
-                .Select(p => p.Category_1)
-                .Distinct()
-                .ToList();
+
+            .Where(p => !string.IsNullOrEmpty(p.Category_1))
+
+            .Select(p => p.Category_1)
+
+            .Distinct()
+
+            .ToList();
 
             // Fetch distinct categories from Category_2
+
             var categories2 = context.Products
-                .Where(p => !string.IsNullOrEmpty(p.Category_2))
-                .Select(p => p.Category_2)
-                .Distinct()
-                .ToList();
+
+            .Where(p => !string.IsNullOrEmpty(p.Category_2))
+
+            .Select(p => p.Category_2)
+
+            .Distinct()
+
+            .ToList();
 
             // Combine both category lists and remove duplicates
+
             var allCategories = categories1.Concat(categories2).Distinct().OrderBy(c => c).ToList();
 
             // Pass all categories to the view
+
             ViewData["Model"] = allCategories;
 
             // Fetch distinct colors from Primary_Color
+
             var allColors = context.Products
-                .Where(p => !string.IsNullOrEmpty(p.Primary_Color))
-                .Select(p => p.Primary_Color)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToList();
+
+            .Where(p => !string.IsNullOrEmpty(p.Primary_Color))
+
+            .Select(p => p.Primary_Color)
+
+            .Distinct()
+
+            .OrderBy(c => c)
+
+            .ToList();
 
             // Pass all colors to the view
+
             ViewData["Colors"] = allColors;
 
             // Start with the base query
+
             IQueryable<Product> query = context.Products.OrderBy(x => x.Name);
 
             if (categories != null && categories.Any())
+
             {
+
                 // Filter products based on selected categories
+
                 query = query.Where(p => categories.Contains(p.Category_1) || categories.Contains(p.Category_2)).OrderBy(x => x.Name);
+
             }
 
             if (colors != null && colors.Any())
+
             {
+
                 // Filter products based on selected colors (AND logic with categories)
+
                 query = query.Where(p => colors.Contains(p.Primary_Color) &&
-                                          (categories == null || !categories.Any() ||
-                                           categories.Contains(p.Category_1) || categories.Contains(p.Category_2))).OrderBy(x => x.Name);
+
+                (categories == null || !categories.Any() ||
+
+                categories.Contains(p.Category_1) || categories.Contains(p.Category_2))).OrderBy(x => x.Name);
+
             }
 
             var model = new ProjectsListViewModel
+
             {
+
                 Products = query.Skip((pageNum - 1) * pageSize)
-                                .Take(pageSize)
-                                .ToList(),
+
+            .Take(pageSize)
+
+            .ToList(),
 
                 PaginationInfo = new PaginationInfo
+
                 {
+
                     CurrentPage = pageNum,
+
                     ItemsPerPage = pageSize,
+
                     TotalItems = query.Count()
+
                 }
+
             };
 
             ViewBag.SelectedCategories = categories; // Pass selected categories to the view
+
             ViewBag.SelectedColors = colors; // Pass selected colors to the view
+
             ViewBag.PageSize = pageSize; // Pass the page size to the view
 
             return View(model);
+
         }
 
         //public IActionResult Error()
