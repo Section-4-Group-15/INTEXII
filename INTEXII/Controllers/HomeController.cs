@@ -25,6 +25,7 @@ namespace INTEXII.Controllers
 
         public IActionResult Index()
         {
+            // User is authenticated, but no recommendations in table, that's why nothing is showing up. 
             var userEmail = User.Identity.IsAuthenticated ? User.Identity.Name : null;
 
             List<UserRec> recommendations = null;
