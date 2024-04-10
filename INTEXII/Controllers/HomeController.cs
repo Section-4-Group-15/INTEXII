@@ -177,11 +177,17 @@ namespace INTEXII.Controllers
                 return NotFound(); // Return a 404 Not Found response if the product is not found
             }
 
+            var productRecs = context.ProductRecs
+                                     .Where(pr => pr.product_ID == id)
+                                     .ToList();
+
             var model = new ProjectsListViewModel
             {
                 Products = new List<Product> { product }, // Create a list with the product
-                PaginationInfo = null // You may need to populate this if required by the view
+                PaginationInfo = null, // You may need to populate this if required by the view
+                ProductRecs = productRecs
             };
+
 
             return View(model);
         }
