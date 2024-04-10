@@ -1,0 +1,86 @@
+@using Microsoft.AspNetCore.Http.Features
+
+@{
+    var consentFeature = Context.Features.Get<ITrackingConsentFeature>();
+    var showBanner = !consentFeature?.CanTrack ?? false;
+    var cookieString = consentFeature?.CreateConsentCookie();
+}
+
+@if (showBanner)
+{
+    <div id="cookieConsentPopup" class="cookie-consent-popup">
+        <div class="cookie-consent-content">
+            <h2>Cookies on Our Site</h2>
+            <p>We use cookies to personalize content and ads, to provide social media features, and to analyze our traffic. We also share information about your use of our site with our social media, advertising, and analytics partners.</p>
+            <div class="cookie-consent-buttons">
+                <button id="acceptCookies" class="btn-accept" data-cookie-string="@cookieString">Accept All</button>
+                <button a asp-controller="Home" asp-action="Privacy" id="learnMore" class="btn-learn-more">Learn More</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var acceptButton = document.getElementById("acceptCookies");
+            acceptButton.addEventListener("click", function () {
+                $.ajax({
+                    type: "GET", // or "POST" if your action supports it
+                    url: "/Home/CreateCookie", // Adjust if your controller or action route is different
+                    success: function () {
+                        document.getElementById("cookieConsentPopup").style.display = "none";
+                        alert("Cookies accepted!"); // Optional: notify the user or refresh the page
+                    },
+                    error: function () {
+                        alert("Error accepting cookies."); // Error handling
+                    }
+                });
+            });
+
+            var learnMoreButton = document.getElementById("learnMore");
+            learnMoreButton.addEventListener("click", function () {
+                window.location.href = "/Home/Privacy";
+            });
+        });
+    </script>
+}
+
+<style>
+    .cookie-consent-popup {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: white;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 1000;
+        width: 300px;
+        color: black;
+    }
+
+    .cookie-consent-content h2 {
+        margin-top: 0;
+    }
+
+    .cookie-consent-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 15px;
+    }
+
+    .btn-accept, .btn-learn-more {
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .btn-accept {
+        background-color: #4CAF50; /* Green */
+        color: white;
+    }
+
+    .btn-learn-more {
+        background-color: #008CBA; /* Blue */
+        color: white;
+    }
+</style>

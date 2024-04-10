@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using INTEXII.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.CookiePolicy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,14 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<BrickwellContext>();
 
+// Configure Cookie Policy
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.CheckConsentNeeded = context => true;
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.Secure = CookieSecurePolicy.Always;
+    options.HttpOnly = HttpOnlyPolicy.Always;
+});
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -66,6 +75,9 @@ else
 
 // App Configuration
 app.UseStaticFiles();
+
+// Cookie Policy
+app.UseCookiePolicy();
 
 app.UseRouting();
 

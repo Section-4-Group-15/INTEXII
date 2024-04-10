@@ -72,12 +72,14 @@
         </div>
 
     </header><!-- End Header -->
+    
     <div class="container">
         <main role="main" class="pb-3">
             <div class="container content-below-nav">
                 <main id="main">
                     @RenderBody()
                 </main>
+                <partial name="_CookieConsentPartial" />
             </div>
         </main>
     </div>
@@ -108,7 +110,6 @@
                 </div>
             </div>
         </div>
-
         <div class="footer-legal">
             <div class="container">
 
@@ -143,7 +144,7 @@
 
             </div>
         </div>
-
+        
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -161,6 +162,10 @@
 
     <!-- Template Main JS File -->
     <script src="~/ZenBlog/assets/js/main.js"></script>
+
+    <!-- AJAX -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
 
 </body>
 </html>

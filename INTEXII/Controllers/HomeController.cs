@@ -5,6 +5,7 @@ using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using INTEXII.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace INTEXII.Controllers
 {
@@ -42,6 +43,24 @@ namespace INTEXII.Controllers
         {
             return View();
         }
+        [HttpGet]
+        public IActionResult CreateCookie()
+        {
+            var consentFeature = HttpContext.Features.Get<ITrackingConsentFeature>();
+            consentFeature.GrantConsent();
+
+            HttpContext.Response.Cookies.Append("ConsentCookie", "Consented", new CookieOptions
+            {
+                IsEssential = true,
+                Secure = true,
+                HttpOnly = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.Now.AddYears(1)
+            });
+
+            return Ok();
+        }
+
         public IActionResult Products(int pageNum, List<string> categories, List<string> colors)
         {
             int pageSize = 5;
