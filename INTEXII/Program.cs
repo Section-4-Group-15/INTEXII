@@ -21,8 +21,8 @@ builder.Services.AddDbContext<BrickwellContext>(options =>
     options.UseSqlServer(connection, sqlServerOptions =>
     {
         sqlServerOptions.EnableRetryOnFailure(
-            maxRetryCount: 5,
-            maxRetryDelay: TimeSpan.FromSeconds(30),
+            maxRetryCount: 10,
+            maxRetryDelay: TimeSpan.FromSeconds(45),
             errorNumbersToAdd: null);
     }));
 
