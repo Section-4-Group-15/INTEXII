@@ -189,12 +189,20 @@
                         <div class="pagination-and-page-size-container">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <!-- Page Size Filter -->
                                     <form id="itemsPerPageForm" asp-controller="Home" asp-action="Products" method="get">
                                         <div class="fieldset-wrapper">
-                                            <fieldset class="filter-box border rounded p-3 fieldset">
+                                            <fieldset class="filter-box border rounded p-3">
+                                                <legend>Items per page:</legend>
+                                                <div class="btn-group">
+                                                    <button type="submit" name="pageSize" value="5" class="btn @(ViewBag.PageSize == 5 ? "btn-primary active" : "btn-outline-primary")">5</button>
+                                                    <button type="submit" name="pageSize" value="10" class="btn @(ViewBag.PageSize == 10 ? "btn-primary active" : "btn-outline-primary")">10</button>
+                                                    <button type="submit" name="pageSize" value="20" class="btn @(ViewBag.PageSize == 20 ? "btn-primary active" : "btn-outline-primary")">20</button>
+                                                </div>
+                                            </fieldset>
+                                        </div>
+                                        <div class="fieldset-wrapper mt-3">
+                                            <fieldset class="filter-box border rounded p-3">
                                                 <legend>Page:</legend>
-                                                <!-- Pagination -->
                                                 <div class="pagination-container">
                                                     <nav aria-label="Page navigation">
                                                         <ul class="pagination justify-content-center">
@@ -211,13 +219,6 @@
                                                     </nav>
                                                 </div>
                                             </fieldset>
-                                            <fieldset class="filter-box border rounded p-3 fieldset">
-                                                <legend>Items per page:</legend>
-                                                <div class="btn-group">
-                                                    <button type="submit" name="pageSize" value="5" class="btn @(ViewBag.PageSize == 5 ? "btn-primary active" : "btn-outline-primary")">5</button>
-                                                    <button type="submit" name="pageSize" value="10" class="btn @(ViewBag.PageSize == 10 ? "btn-primary active" : "btn-outline-primary")">10</button>
-                                                </div>
-                                            </fieldset>
                                         </div>
                                     </form>
                                 </div>
@@ -228,25 +229,20 @@
                                 const form = document.getElementById('itemsPerPageForm');
                                 form.addEventListener('click', function (event) {
                                     if (event.target.type === 'submit') {
+                                        event.preventDefault(); // Prevent the default form submission
+
                                         const categories = Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(el => el.value);
                                         const colors = Array.from(document.querySelectorAll('input[name="colors"]:checked')).map(el => el.value);
                                         const selectedPageSize = event.target.value;
 
-                                        // Add selected filter options and page size to the form data
-                                        const formData = new FormData(form);
-                                        formData.append('categories', categories);
-                                        formData.append('colors', colors);
-                                        formData.append('pageSize', selectedPageSize);
+                                        // Build the URL with selected filter options and page size
+                                        const url = new URL(form.action, window.location.origin);
+                                        categories.forEach(category => url.searchParams.append('categories', category));
+                                        colors.forEach(color => url.searchParams.append('colors', color));
+                                        url.searchParams.append('pageSize', selectedPageSize);
 
-                                        // Submit the form with updated data
-                                        fetch(form.action, {
-                                            method: 'POST',
-                                            body: formData
-                                        }).then(response => {
-                                            if (response.ok) {
-                                                window.location.reload(); // Refresh the page after form submission
-                                            }
-                                        }).catch(error => console.error('Error:', error));
+                                        // Redirect to the updated URL
+                                        window.location.href = url.toString();
                                     }
                                 });
                             });
