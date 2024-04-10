@@ -117,18 +117,26 @@ namespace INTEXII.Controllers
             return View(model);
         }
 
-
-
-
         public IActionResult Error()
         {
             return View();
         }
 
         // Admin Controller
+        [Authorize(Roles = "Admin")]
         public IActionResult AdminProducts()
         {
             return View();
+        }
+        [Authorize(Roles = "Admin")]
+        public IActionResult AdminUsers()
+        {
+            return View();
+        }
+        [Authorize(Roles = "Admin")]
+        public IActionResult AdminOrders()
+        {
+               return View();
         }
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AssignRole(string userId)
