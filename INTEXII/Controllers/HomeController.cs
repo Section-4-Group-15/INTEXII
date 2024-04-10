@@ -2,6 +2,7 @@ using INTEXII.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using INTEXII.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 
@@ -41,7 +42,7 @@ namespace INTEXII.Controllers
         {
             return View();
         }
-        public IActionResult Products(int pageNum, List<string> categories)
+        public IActionResult Products(int pageNum, List<string> categories, List<string> colors)
         {
             int pageSize = 5;
 
@@ -68,6 +69,17 @@ namespace INTEXII.Controllers
             // Pass all categories to the view
             ViewData["Model"] = allCategories;
 
+            // Fetch distinct colors from Primary_Color
+            var allColors = context.Products
+                .Where(p => !string.IsNullOrEmpty(p.Primary_Color))
+                .Select(p => p.Primary_Color)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
+
+            // Pass all colors to the view
+            ViewData["Colors"] = allColors;
+
             // Start with the base query
             IQueryable<Product> query = context.Products.OrderBy(x => x.Name);
 
@@ -75,6 +87,14 @@ namespace INTEXII.Controllers
             {
                 // Filter products based on selected categories
                 query = query.Where(p => categories.Contains(p.Category_1) || categories.Contains(p.Category_2)).OrderBy(x => x.Name);
+            }
+
+            if (colors != null && colors.Any())
+            {
+                // Filter products based on selected colors (AND logic with categories)
+                query = query.Where(p => colors.Contains(p.Primary_Color) &&
+                                          (categories == null || !categories.Any() ||
+                                           categories.Contains(p.Category_1) || categories.Contains(p.Category_2))).OrderBy(x => x.Name);
             }
 
             var model = new ProjectsListViewModel
@@ -92,9 +112,11 @@ namespace INTEXII.Controllers
             };
 
             ViewBag.SelectedCategories = categories; // Pass selected categories to the view
+            ViewBag.SelectedColors = colors; // Pass selected colors to the view
 
             return View(model);
         }
+
 
 
 
