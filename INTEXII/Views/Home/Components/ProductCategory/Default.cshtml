@@ -8,11 +8,11 @@
     <!-- Adjust width as needed -->
     <h5>Categories:</h5>
     <form asp-controller="Home" asp-action="Products" method="get">
-
-        @foreach (string cat in Model ?? Enumerable.Empty<string>())
+        @foreach (string cat in ViewData["Model"] as List<string>)
         {
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="@cat" name="categories" value="@cat" />
+                <input class="form-check-input" type="checkbox" id="@cat" name="categories" value="@cat"
+                @(ViewData["SelectedCategories"] != null && ((List<string>)ViewData["SelectedCategories"]).Contains(cat) ? "checked" : "") />
                 <label class="form-check-label" for="@cat">@cat</label>
             </div>
         }
