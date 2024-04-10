@@ -10,12 +10,16 @@ namespace INTEXII.Components
         {
             _brickwellContext = temp;
         }
-        public IViewComponentResult Invoke()
+
+        public IViewComponentResult Invoke(List<string> selectedCategories)
         {
             var categoryTypes = _brickwellContext.Products
                 .Select(x => x.Category_1)
                 .Distinct()
-                .OrderBy(x => x);
+                .OrderBy(x => x)
+                .ToList();
+
+            ViewData["SelectedCategories"] = selectedCategories;
 
             return View(categoryTypes);
         }

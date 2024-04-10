@@ -1,0 +1,170 @@
+﻿@model IEnumerable<INTEXII.Models.Product>
+
+@{
+    ViewData["Title"] = "Admin - Products";
+}
+
+<body>
+<h1>Product Management</h1>
+
+<button id="add-product-btn" class="btn btn-success mb-3">Add New Product</button>
+
+<table class="table table-fixed-layout">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Year</th>
+            <th>Num Parts</th>
+            <th>Price</th>
+            <th>Image Link</th>
+            <th>Color 1</th>
+            <th>Color 2</th>
+            <th>Description</th>
+            <th>Category 1</th>
+            <th>Category 2</th>
+            <th style="width: 14%;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr id="new-product-row" style="display:none;">
+            <td><input type="text" class="form-control" placeholder="Name" id="new-name"></td>
+            <td><input type="text" class="form-control" placeholder="Year" id="new-year"></td>
+            <td><input type="text" class="form-control" placeholder="Num Parts" id="new-num_parts"></td>
+            <td><input type="text" class="form-control" placeholder="Price" id="new-price"></td>
+            <td><input type="text" class="form-control" placeholder="Image Link" id="new-img_link"></td>
+            <td><input type="text" class="form-control" placeholder="Color 1" id="new-primary_color"></td>
+            <td><input type="text" class="form-control" placeholder="Color 2" id="new-secondary_color"></td>
+            <td><input type="text" class="form-control" placeholder="Description" id="new-description"></td>
+            <td><input type="text" class="form-control" placeholder="Category 1" id="new-category_1"></td>
+            <td><input type="text" class="form-control" placeholder="Category 2" id="new-category_2"></td>
+            <td><button class="submit-new-btn btn btn-success">Submit</button></td>
+        </tr>
+        @foreach (var product in Model)
+        {
+            <tr data-product-id="@product.Product_Id">
+                <td>@product.Name</td>
+                <td>@product.Year</td>
+                <td>@product.Num_Parts</td>
+                <td>@product.Price</td>
+                <td>@product.Img_Link</td>
+                <td>@product.Primary_Color</td>
+                <td>@product.Secondary_Color</td>
+                <td>@product.Description</td>
+                <td>@product.Category_1</td>
+                <td>@product.Category_2</td>
+                <td>
+                    <button class="edit-btn btn btn-primary">Edit</button>
+                    <button class="delete-btn btn btn-danger">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+            $('body').on('click', '.edit-btn', function () {
+                var $row = $(this).closest('tr');
+                if ($(this).text() === 'Edit') {
+                    // Convert text to input fields
+                    $row.find('td:not(:last)').each(function () {
+                        var text = $(this).text();
+                        $(this).addClass('editable-cell').html('<input type="text" class="form-control edit-input" value="' + text + '"/>');
+                    });
+
+                    $(this).text('Submit');
+                } else {
+                    // Ask for confirmation before updating
+                    var confirmUpdate = confirm("Are you sure you want to update this product?");
+                    if (confirmUpdate) {
+                        // User clicked "OK", proceed with update
+                        var data = {
+                            Product_Id: $row.data('product-id'),
+                            Name: $row.find('td input').eq(0).val(),
+                            Year: $row.find('td input').eq(1).val(),
+                            Num_Parts: $row.find('td input').eq(2).val(),
+                            Price: $row.find('td input').eq(3).val(),
+                            Img_Link: $row.find('td input').eq(4).val(),
+                            Primary_Color: $row.find('td input').eq(5).val(),
+                            Secondary_Color: $row.find('td input').eq(6).val(),
+                            Description: $row.find('td input').eq(7).val(),
+                            Category_1: $row.find('td input').eq(8).val(),
+                            Category_2: $row.find('td input').eq(9).val()
+                        };
+
+                        $(this).text('Updating').prop('disabled', true).addClass('btn-warning');
+
+                        $.post('/Home/UpdateProduct', data, function (response) {
+                            if (response.success) {
+                                // Iterate through each input field, replace with text
+                                alert('Product updated successfully!');
+                                $row.find('td:not(:last)').each(function (index) {
+                                    $(this).html(data[Object.keys(data)[index + 1]]);
+                                });
+                                $row.find('.edit-btn').text('Edit').prop('disabled', false).removeClass('btn-warning').addClass('btn-success');
+                            } else {
+                                // Handle error
+                                alert('Error: ' + response.message);
+                                $row.find('.edit-btn').text('Submit').prop('disabled', false).removeClass('btn-warning').addClass('btn-danger');
+                            }
+                        });
+                    } else {
+                        // User clicked "Cancel", revert back to text
+                        $row.find('td:not(:last)').each(function (index) {
+                            $(this).html(data[Object.keys(data)[index + 1]]);
+                        });
+                        $row.find('.edit-btn').text('Edit');
+                    }
+                }
+            });
+            $('#add-product-btn').click(function() {
+                $('#new-product-row').show();
+            });
+
+            $('body').on('click', '.submit-new-btn', function() {
+                var confirmAdd = confirm("Are you sure you want to add this product?");
+                if (confirmAdd) {
+                    var data = {
+                        Name: $('#new-name').val(),
+                        Year: $('#new-year').val(),
+                        Num_Parts: $('#new-num_parts').val(),
+                        Price: $('#new-price').val(),
+                        Img_Link: $('#new-img_link').val(),
+                        Primary_Color: $('#new-primary_color').val(),
+                        Secondary_Color: $('#new-secondary_color').val(),
+                        Description: $('#new-description').val(),
+                        Category_1: $('#new-category_1').val(),
+                        Category_2: $('#new-category_2').val()
+                    };
+                    $.post('/Home/AddProduct', data, function(response) {
+                        if (response.success) {
+                            alert('Product added successfully!');
+                            location.reload(); // Reload the page to see the new product
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    });
+                }
+            });
+
+            $('body').on('click', '.delete-btn', function() {
+                var $row = $(this).closest('tr');
+                console.log($row.data('product-id'));
+                var Product_Id = $row.data('product-id');
+                var confirmDelete = confirm("Are you sure you want to delete this product?");
+                if (confirmDelete) {
+                    $.post('/Home/DeleteProduct', { Product_Id }, function(response) {
+                        if (response.success) {
+                            alert('Product deleted successfully!');
+                            $row.remove();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    });
+                }
+            });
+
+});
+</script>
+</body>

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using INTEXII.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,7 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     // User settings
     options.User.RequireUniqueEmail = true;
 })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<BrickwellContext>();
 
 
@@ -75,5 +77,24 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapRazorPages();
+
+// Seed Roles, if they don't exist
+//static async Task SeedRoles(IServiceProvider serviceProvider)
+//{
+//    var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+//    string[] roleNames = { "Admin", "User" };
+//    foreach (var roleName in roleNames)
+//    {
+//        var roleExist = await roleManager.RoleExistsAsync(roleName);
+//        if (!roleExist)
+//        {
+//            await roleManager.CreateAsync(new IdentityRole(roleName));
+//        }
+//    }
+//}
+
+//var serviceProvider = app.Services.GetRequiredService<IServiceProvider>().CreateScope().ServiceProvider;
+//await SeedRoles(serviceProvider);
 
 app.Run();
