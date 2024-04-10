@@ -15,7 +15,7 @@ namespace INTEXII.Controllers
 
         private readonly UserManager<IdentityUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger, BrickwellContext con = null, UserManager<IdentityUser> userManager = null)
+        public HomeController(ILogger<HomeController> logger, BrickwellContext con, UserManager<IdentityUser> userManager)
         {
             _logger = logger;
             _userManager = userManager;
@@ -139,7 +139,8 @@ namespace INTEXII.Controllers
                 return RedirectToAction("Index"); // Redirect to the appropriate page
             } catch (Exception ex)
             {
-                   return RedirectToAction("Error"); // Redirect to the appropriate page
+                _logger.LogError(ex, "Error assigning role");
+                return RedirectToAction("Error"); // Redirect to the appropriate page
             }
         }
     }
