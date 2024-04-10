@@ -55,12 +55,37 @@
                 </tbody>
             </table>
 
-            <div>
-                @for (int i = 1; i <= totalPages; i++)
-                {
-                    <a asp-action="AdminOrders" asp-route-page="@i" class="@(i == currentPage ? "active" : "")">@i</a>
-                }
-            </div>
+            <nav aria-label="Page navigation" class="pagination-wrapper">
+                <ul class="pagination flex-wrap justify-content-center">
+                    @if (currentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="AdminOrders" asp-route-page="@(currentPage - 1)" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    }
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link" asp-action="AdminOrders" asp-route-page="@i">@i</a>
+                        </li>
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="AdminOrders" asp-route-page="@(currentPage + 1)" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+
+
+
         }
         else
         {

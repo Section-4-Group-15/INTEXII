@@ -1306,3 +1306,23 @@ section {
 .content-below-nav {
     padding-top: 400px;
 }
+
+/* Optional: Additional styling for the pagination container */
+nav[aria-label="Page navigation"] {
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+/* Custom styling for pagination */
+.pagination-wrapper {
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    margin: 20px 0;
+}
+
+.pagination {
+    gap: 10px; /* Ensures space between pagination items when they wrap */
+}
