@@ -1,5 +1,105 @@
 ﻿@{
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = Model.Products.FirstOrDefault()?.Name;
 }
-@using System.Web
 @model ProjectsListViewModel
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"]</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .product-img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .icon-rating, .icon-pieces {
+            max-height: 50px;
+        }
+
+        .product-title {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .product-info {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">@ReplaceSpecialCharacters(Model.Products.FirstOrDefault()?.Name)</h1>
+
+        <div class="row mb-4">
+            <div class="col-md-7">
+                <!-- Main Product Image -->
+                <img src="@Model.Products.FirstOrDefault()?.Img_Link" alt="@Model.Products.FirstOrDefault()?.Name" class="product-img img-fluid" />
+                <p><strong>Age:</strong> Age Group</p>
+                <p><strong>Pieces:</strong> @Model.Products.FirstOrDefault()?.Num_Parts</p>
+                <p><strong>Primary Color:</strong> @Model.Products.FirstOrDefault()?.Primary_Color</p>
+                <p><strong>Secondary Color:</strong> @Model.Products.FirstOrDefault()?.Secondary_Color</p>
+                <p><strong>Rating:</strong> <span class="icon-rating">★ ★ ★ ★ ★</span></p>
+                <h2 class="text-success">$@Model.Products.FirstOrDefault()?.Price</h2>
+
+
+                <!-- Purchase Options -->
+                <button class="btn btn-primary">Add to Cart</button>
+            </div>
+
+            <div class="col-md-5 product-info">
+                <!-- Product Details -->
+                <p class="text-muted">@ReplaceSpecialCharacters(Model.Products.FirstOrDefault()?.Description)</p>
+            </div>
+        </div>
+        <!-- Similar Products -->
+        <h2>Similar Products You May Enjoy</h2>
+        <div class="row">
+            @* @foreach (var similarProduct in Model.SimilarProducts)
+            {
+            <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card">
+            <img src="@similarProduct.Img_Link" alt="@similarProduct.Name" class="card-img-top" />
+            <div class="card-body">
+            <h5 class="card-title">@similarProduct.Name</h5>
+            <p class="card-text">@similarProduct.Short_Description</p>
+            <a href="@similarProduct.Detail_Link" class="btn btn-outline-primary">View Details</a>
+            </div>
+            </div>
+            </div>
+            } *@
+        </div>
+    </div>
+    <!-- Bootstrap JS and dependencies (jQuery, Popper.js, Bootstrap) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+
+@functions {
+    public string ReplaceSpecialCharacters(string input)
+    {
+        if (input == null)
+        {
+            return "";
+        }
+
+        // Replace special characters with their equivalents
+        return input.Replace("«Ä", "")
+            .Replace("‚Äì", "—")
+            .Replace("‚Ñ¢", "™")
+            .Replace("‚Äô", "’")
+            .Replace("¬Æ", "©")
+            .Replace("‚Äò", "‘")
+            .Replace("‚Äú", "“")
+            .Replace("‚Äù", "”")
+            .Replace("‚Ñš", "š")
+            .Replace("‚Ñ”", "•")
+            .Replace("‚Ñˆ", "Ш")
+            .Replace("‚Ä†", "†")
+            .Replace("‚Äˇ", "ˇ");
+    }
+}

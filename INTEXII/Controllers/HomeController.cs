@@ -116,9 +116,26 @@ namespace INTEXII.Controllers
             return View(model);
         }
 
-        public IActionResult Error()
+        //public IActionResult Error()
+        //{
+        //    return View();
+        //}
+        public IActionResult IndProducts(int id)
         {
-            return View();
+            var product = context.Products.FirstOrDefault(p => p.Product_Id == id);
+
+            if (product == null)
+            {
+                return NotFound(); // Return a 404 Not Found response if the product is not found
+            }
+
+            var model = new ProjectsListViewModel
+            {
+                Products = new List<Product> { product }, // Create a list with the product
+                PaginationInfo = null // You may need to populate this if required by the view
+            };
+
+            return View(model);
         }
 
         // Admin Controller
