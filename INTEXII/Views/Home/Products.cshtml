@@ -17,9 +17,104 @@
         .filter-box .col-2 {
             padding: 0; /* Remove padding from the inner column */
         }
+
+    .active {
+        background-color: #007bff; /* Bootstrap primary color */
+        color: #fff; /* Text color */
+        .pagination-container .pagination .page-item
+
+    {
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+    .pagination-container .pagination .page-item.active .page-link {
+        background-color: #007bff; /* Bootstrap primary color */
+        border-color: #007bff; /* Border color */
+        color: #fff; /* Text color */
+    }
+
+    .pagination-container .pagination .page-link {
+        color: #007bff; /* Link color */
+        border: 1px solid #dee2e6; /* Border color */
+        padding: 6px 12px; /* Padding */
+    }
+
+    .items-per-page-container .btn-group .btn {
+        margin-right: 5px;
+    }
+
+        .items-per-page-container .btn-group .btn.active {
+            background-color: #007bff; /* Bootstrap primary color */
+            border-color: #007bff; /* Border color */
+            color: #fff; /* Text color */
+        }
+
+    .pagination-container .pagination .page-item {
+        display: inline-block;
+        margin-right: 5px;
+    }
+
+        .pagination-container .pagination .page-item.active .page-link {
+            background-color: #007bff; /* Bootstrap primary color */
+            border-color: #007bff; /* Border color */
+            color: #fff; /* Text color */
+        }
+
+    .pagination-container .pagination .page-link {
+        color: #007bff; /* Link color */
+        border: 1px solid #dee2e6; /* Border color */
+        padding: 6px 12px; /* Padding */
+    }
+
+
+        .items-per-page-container .btn-group .btn.active {
+            background-color: #007bff; /* Bootstrap primary color */
+            border-color: #007bff; /* Border color */
+            color: #fff; /* Text color */
+        }
+
+    .pagination-and-page-size-container .row {
+        margin-bottom: 20px; /* Adjust as needed */
+    }
+
+    .pagination-and-page-size-container .fieldset-wrapper {
+        display: flex;
+        justify-content: space-between;
+    }
+
+        .pagination-and-page-size-container .fieldset-wrapper .fieldset {
+            width: 48%;
+        }
+    }
 </style>
 <body>
     <main id="main">
+        <!-- ======= Table of Products ======= -->
+        @functions {
+            public string ReplaceSpecialCharacters(string input)
+            {
+                if (input == null)
+                {
+                    return "";
+                }
+
+                // Replace special characters with their equivalents
+                return input.Replace("«Ä", "")
+                .Replace("‚Äì", "—")
+                .Replace("‚Ñ¢", "™")
+                .Replace("‚Äô", "’")
+                .Replace("¬Æ", "©")
+                .Replace("‚Äò", "‘")
+                .Replace("‚Äú", "“")
+                .Replace("‚Äù", "”")
+                .Replace("‚Ñš", "š")
+                .Replace("‚Ñ”", "•")
+                .Replace("‚Ñˆ", "Ш")
+                .Replace("‚Ä†", "†")
+                .Replace("‚Äˇ", "ˇ");
+            }
+        }
         <div class="row">
             <div class="col-md-3">
                 <div class="filter-box border rounded p-3" style="width: 300px;">
@@ -64,9 +159,9 @@
                         {
                             <div class="product-item row">
                                 <div class="col-md-10">
-                                    <h3>@product.Name</h3>
+                                    <h3>@ReplaceSpecialCharacters(product.Name)</h3>
                                     <img src="@product.Img_Link" alt="Image" class="img-fluid" style="max-height: 300px; width: auto;" />
-                                    <p><strong>Product Description:</strong> @product.Description</p>
+                                    <p><strong>Product Description:</strong> @ReplaceSpecialCharacters(product.Description)</p>
                                     <p><strong>Year:</strong> @product.Year</p>
                                     <p><strong>Number of Parts:</strong> @product.Num_Parts</p>
                                     <p><strong>Primary Color:</strong> @product.Primary_Color</p>
@@ -79,9 +174,10 @@
                                         <a href="#" class="btn btn-info mt-2" role="button" data-toggle="tooltip" data-placement="top" title="Add to Cart">
                                             <img src="~/img/shopping-cart.png" alt="Add to Cart" class="img-fluid" style="max-height: 30px;" />
                                         </a>
-                                        <a href="#" class="btn btn-secondary mt-2" role="button">
+                                        <a href="@Url.Action("IndProducts", new { id = product.Product_Id })" class="btn btn-secondary mt-2" role="button">
                                             View Details
                                         </a>
+
                                     </div>
                                 </div>
                             </div>
@@ -89,21 +185,72 @@
                         }
 
                         <!-- Pagination -->
-                        <div class="pagination-container">
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination justify-content-center">
-                                    @if (Model.PaginationInfo != null && Model.PaginationInfo.TotalPages > 1)
-                                    {
-                                        for (int i = 1; i <= Model.PaginationInfo.TotalPages; i++)
-                                        {
-                                            <li class="page-item @(Model.PaginationInfo.CurrentPage == i ? "active" : "")">
-                                                <a class="page-link" href="@Url.Action("Products", new { pageNum = i, categories = ViewBag.SelectedCategories })">@i</a>
-                                            </li>
-                                        }
-                                    }
-                                </ul>
-                            </nav>
+                        <div class="pagination-and-page-size-container">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <!-- Page Size Filter -->
+                                    <form id="itemsPerPageForm" asp-controller="Home" asp-action="Products" method="get">
+                                        <div class="fieldset-wrapper">
+                                            <fieldset class="filter-box border rounded p-3 fieldset">
+                                                <legend>Page:</legend>
+                                                <!-- Pagination -->
+                                                <div class="pagination-container">
+                                                    <nav aria-label="Page navigation">
+                                                        <ul class="pagination justify-content-center">
+                                                            @if (Model.PaginationInfo != null && Model.PaginationInfo.TotalPages > 1)
+                                                            {
+                                                                for (int i = 1; i <= Model.PaginationInfo.TotalPages; i++)
+                                                                {
+                                                                    <li class="page-item @(Model.PaginationInfo.CurrentPage == i ? "active" : "")">
+                                                                        <a class="page-link" href="@Url.Action("Products", new { pageNum = i, categories = ViewBag.SelectedCategories, colors = ViewBag.SelectedColors, pageSize = ViewBag.PageSize })">@i</a>
+                                                                    </li>
+                                                                }
+                                                            }
+                                                        </ul>
+                                                    </nav>
+                                                </div>
+                                            </fieldset>
+                                            <fieldset class="filter-box border rounded p-3 fieldset">
+                                                <legend>Items per page:</legend>
+                                                <div class="btn-group">
+                                                    <button type="submit" name="pageSize" value="5" class="btn @(ViewBag.PageSize == 5 ? "btn-primary active" : "btn-outline-primary")">5</button>
+                                                    <button type="submit" name="pageSize" value="10" class="btn @(ViewBag.PageSize == 10 ? "btn-primary active" : "btn-outline-primary")">10</button>
+                                                </div>
+                                            </fieldset>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function () {
+                                const form = document.getElementById('itemsPerPageForm');
+                                form.addEventListener('click', function (event) {
+                                    if (event.target.type === 'submit') {
+                                        const categories = Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(el => el.value);
+                                        const colors = Array.from(document.querySelectorAll('input[name="colors"]:checked')).map(el => el.value);
+                                        const selectedPageSize = event.target.value;
+
+                                        // Add selected filter options and page size to the form data
+                                        const formData = new FormData(form);
+                                        formData.append('categories', categories);
+                                        formData.append('colors', colors);
+                                        formData.append('pageSize', selectedPageSize);
+
+                                        // Submit the form with updated data
+                                        fetch(form.action, {
+                                            method: 'POST',
+                                            body: formData
+                                        }).then(response => {
+                                            if (response.ok) {
+                                                window.location.reload(); // Refresh the page after form submission
+                                            }
+                                        }).catch(error => console.error('Error:', error));
+                                    }
+                                });
+                            });
+                        </script>
+
                     }
                     else
                     {

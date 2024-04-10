@@ -25,9 +25,34 @@ namespace INTEXII.Controllers
 
         public IActionResult Index()
         {
+            var userEmail = User.Identity.IsAuthenticated ? User.Identity.Name : null;
+
+            List<UserRec> recommendations = null;
+
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                // Retrieve user-specific recommendations based on their email
+                recommendations = context.UserRecs
+                    .Where(ur => ur.Email == userEmail)
+                    .ToList();
+            }
+            //else
+            //{
+            //    // Fetch generic recommendations if no user is logged in or no user-specific recommendations are found
+            //    recommendations = context.UserRecs
+            //        .Where(ur => ur.Person_ID == 0)
+            //        .ToList();
+            //}
+
+            ViewData["Recommendations"] = recommendations;
+
             var products = context.Products.ToList();
             return View(products);
         }
+
+
+
+
 
         public IActionResult About()
         {
@@ -43,6 +68,7 @@ namespace INTEXII.Controllers
         {
             return View();
         }
+<<<<<<< HEAD
         [HttpGet]
         public IActionResult CreateCookie()
         {
@@ -62,9 +88,10 @@ namespace INTEXII.Controllers
         }
 
         public IActionResult Products(int pageNum, List<string> categories, List<string> colors)
+=======
+        public IActionResult Products(int pageNum, List<string> categories, List<string> colors, int pageSize = 5)
+>>>>>>> a6859c7439cc194cc2ed2f4c9a23cbbc2d6b8b26
         {
-            int pageSize = 5;
-
             // Ensure pageNum is at least 1 to avoid negative offset
             pageNum = Math.Max(1, pageNum);
 
@@ -132,13 +159,31 @@ namespace INTEXII.Controllers
 
             ViewBag.SelectedCategories = categories; // Pass selected categories to the view
             ViewBag.SelectedColors = colors; // Pass selected colors to the view
+            ViewBag.PageSize = pageSize; // Pass the page size to the view
 
             return View(model);
         }
 
-        public IActionResult Error()
+        //public IActionResult Error()
+        //{
+        //    return View();
+        //}
+        public IActionResult IndProducts(int id)
         {
-            return View();
+            var product = context.Products.FirstOrDefault(p => p.Product_Id == id);
+
+            if (product == null)
+            {
+                return NotFound(); // Return a 404 Not Found response if the product is not found
+            }
+
+            var model = new ProjectsListViewModel
+            {
+                Products = new List<Product> { product }, // Create a list with the product
+                PaginationInfo = null // You may need to populate this if required by the view
+            };
+
+            return View(model);
         }
 
         // Admin Controller
