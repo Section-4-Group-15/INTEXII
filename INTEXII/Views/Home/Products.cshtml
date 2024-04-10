@@ -36,6 +36,16 @@
                                 </div>
                             }
                         }
+                        <hr />
+                        <h5>Primary Color:</h5>
+                        @foreach (string color in ViewData["Colors"] as List<string>)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="@color" name="colors" value="@color"
+                                @(ViewBag.SelectedColors != null && ((List<string>)ViewBag.SelectedColors).Contains(color) ? "checked" : "") />
+                                <label class="form-check-label" for="@color">@color</label>
+                            </div>
+                        }
                         <div class="mt-3">
                             <button type="submit" class="btn btn-primary">Apply Filter</button>
                             <a asp-controller="Home" asp-action="Products" class="btn btn-secondary ml-2">Reset Filters</a>
@@ -43,6 +53,7 @@
                     </form>
                 </div>
             </div>
+
             <div class="col-md-9">
                 <div class="container">
                     <h1>Lego Products:</h1>
