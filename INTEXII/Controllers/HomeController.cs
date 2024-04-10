@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Diagnostics;
 using INTEXII.Models.ViewModels;
-using Microsoft.EntityFrameworkCore;
 
 namespace INTEXII.Controllers
 {
@@ -12,9 +11,12 @@ namespace INTEXII.Controllers
         private readonly ILogger<HomeController> _logger;
         private BrickwellContext context { get; set; }
 
-        public HomeController(ILogger<HomeController> logger, BrickwellContext con = null)
+        private readonly UserManager<IdentityUser> _userManager;
+
+        public HomeController(ILogger<HomeController> logger, BrickwellContext con = null, UserManager<IdentityUser> userManager = null)
         {
             _logger = logger;
+            _userManager = userManager;
             context = con;
         }
 
@@ -38,8 +40,7 @@ namespace INTEXII.Controllers
         {
             return View();
         }
-        [Authorize]
-        public IActionResult Products(int pageNum = 1, List<string> categories = null)
+        public IActionResult Products(int pageNum, List<string> categories)
         {
             int pageSize = 5;
 
@@ -99,6 +100,24 @@ namespace INTEXII.Controllers
         public IActionResult Error()
         {
             return View();
+        }
+
+        // Admin Controller
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AssignRole(string userId)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(userId);
+                if (user != null && !await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    await _userManager.AddToRoleAsync(user, "Admin");
+                }
+                return RedirectToAction("Index"); // Redirect to the appropriate page
+            } catch (Exception ex)
+            {
+                   return RedirectToAction("Error"); // Redirect to the appropriate page
+            }
         }
     }
 
