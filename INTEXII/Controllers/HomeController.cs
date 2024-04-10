@@ -134,10 +134,37 @@ namespace INTEXII.Controllers
             return View();
         }
         [Authorize(Roles = "Admin")]
-        public IActionResult AdminOrders()
+        public async Task<IActionResult> AdminOrders(int page = 1)
         {
-               return View();
+            int pageSize = 100; // Set page size
+
+            try
+            {
+                // Order by Date descending, then by Time descending to get most recent orders first
+                var ordersQuery = context.Orders
+                                         .OrderByDescending(o => o.Date)
+                                         .ThenByDescending(o => o.Time)
+                                         .AsQueryable();
+
+                var orders = await ordersQuery
+                                     .Skip((page - 1) * pageSize)
+                                     .Take(pageSize)
+                                     .ToListAsync();
+
+                // Pass total order count and current page to the view for pagination
+                ViewData["TotalOrders"] = ordersQuery.Count();
+                ViewData["CurrentPage"] = page;
+
+                return View(orders);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting orders");
+                return RedirectToAction("Error");
+            }
         }
+
+
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AssignRole(string userId)
         {
