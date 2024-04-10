@@ -89,14 +89,9 @@ namespace INTEXII.Controllers
             return Ok();
         }
 
-        public IActionResult Products(int pageNum, List<string> categories, List<string> colors)
-
+        public IActionResult Products(int pageNum = 1, List<string> categories = null, List<string> colors = null, int pageSize = 5)
         {
-
-            var pageSize = 6; // Set page size
-
             // Ensure pageNum is at least 1 to avoid negative offset
-
             pageNum = Math.Max(1, pageNum);
 
             // Fetch distinct categories from Category_1
@@ -178,37 +173,23 @@ namespace INTEXII.Controllers
             }
 
             var model = new ProjectsListViewModel
-
             {
-
                 Products = query.Skip((pageNum - 1) * pageSize)
-
-            .Take(pageSize)
-
-            .ToList(),
-
+           .Take(pageSize)
+           .ToList(),
                 PaginationInfo = new PaginationInfo
-
                 {
-
                     CurrentPage = pageNum,
-
                     ItemsPerPage = pageSize,
-
                     TotalItems = query.Count()
-
                 }
-
             };
 
             ViewBag.SelectedCategories = categories; // Pass selected categories to the view
-
             ViewBag.SelectedColors = colors; // Pass selected colors to the view
-
             ViewBag.PageSize = pageSize; // Pass the page size to the view
 
             return View(model);
-
         }
 
         //public IActionResult Error()
@@ -224,11 +205,17 @@ namespace INTEXII.Controllers
                 return NotFound(); // Return a 404 Not Found response if the product is not found
             }
 
+            var productRecs = context.ProductRecs
+                                     .Where(pr => pr.product_ID == id)
+                                     .ToList();
+
             var model = new ProjectsListViewModel
             {
                 Products = new List<Product> { product }, // Create a list with the product
-                PaginationInfo = null // You may need to populate this if required by the view
+                PaginationInfo = null, // You may need to populate this if required by the view
+                ProductRecs = productRecs
             };
+
 
             return View(model);
         }

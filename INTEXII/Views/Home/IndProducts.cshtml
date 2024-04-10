@@ -76,6 +76,23 @@
             </div>
             } *@
         </div>
+        <section id="recommended-items" class="recommended-items">
+            <div class="container" data-aos="fade-up">
+                <div class="row justify-content-center">
+                    @foreach (var rec in Model.ProductRecs)
+                    {
+                        <div class="col-lg-3 col-md-6 col-12">
+                            <div class="recommended-item text-center">
+                                <a href="@Url.Action("IndProducts", new { id = rec.recommended_product_ID })">
+                                    <img src="@rec.product_url" alt="@rec.recommended_product_name" class="img-fluid" style="max-height: 200px; width: auto;">
+                                    <h3>@rec.recommended_product_name</h3>
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
     </div>
     <!-- Bootstrap JS and dependencies (jQuery, Popper.js, Bootstrap) -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

@@ -90,6 +90,13 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Define custom routes
+app.MapControllerRoute(
+    name: "products",
+    pattern: "products/{action}/{id?}",
+    defaults: new { controller = "Products", action = "Index" }
+);
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

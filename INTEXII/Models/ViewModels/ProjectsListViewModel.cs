@@ -5,5 +5,7 @@ namespace INTEXII.Models.ViewModels
     {
         public List<Product> Products { get; set; }
         public PaginationInfo PaginationInfo { get; set; } = new PaginationInfo();
+        public List<ProductRec> ProductRecs { get; set; }
+
     }
 }
