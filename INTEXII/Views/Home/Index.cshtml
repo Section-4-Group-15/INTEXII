@@ -70,11 +70,10 @@
             </div>
         </section><!-- End Aurora Bricks Section -->
         <!-- ======= Recommended Items Section ======= -->
-        <!-- ======= Recommended Items Section ======= -->
         <section id="recommended-items" class="recommended-items">
             <div class="container" data-aos="fade-up">
                 <div class="section-title text-center">
-                    @if (ViewData["Recommendations"] != null)
+                    @if (ViewData["Recommendations"] != null && ((List<UserRec>)ViewData["Recommendations"]).Count > 0)
                     {
                         <h2>Recommended for You</h2>
                         <p>Explore our top picks to complement your creativity.</p>
@@ -86,7 +85,7 @@
                     }
                 </div>
                 <div class="row justify-content-center">
-                    @if (ViewData["Recommendations"] != null)
+                    @if (ViewData["Recommendations"] != null && ((List<UserRec>)ViewData["Recommendations"]).Count > 0)
                     {
                         var recommendations = ViewData["Recommendations"] as List<UserRec>;
                         foreach (var recommendation in recommendations)
@@ -103,7 +102,7 @@
                     }
                     else
                     {
-                        <!-- Default items if no recommendations found -->
+                        <!-- Default items if no recommendations found or user is not logged in -->
                         <!-- Item 1 -->
                         <div class="col-lg-3 col-md-6 col-12">
                             <div class="recommended-item text-center">
