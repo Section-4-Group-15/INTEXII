@@ -4,9 +4,108 @@
 @model IEnumerable<INTEXII.Models.Product>
 
 <body>
-
     <main id="main">
-        This is the admin products page!
+        <h1>Product Management</h1>
+        <div>
+            <table class="table-fixed-layout table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Year</th>
+                        <th>Num Parts</th>
+                        <th>Price</th>
+                        <th>Image Link</th>
+                        <th>Color 1</th>
+                        <th>Color 2</th>
+                        <th>Description</th>
+                        <th>Category 1</th>
+                        <th>Category 2</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in Model)
+                    {
+                        <tr data-product-id="@product.Product_Id">
+                            <td>@product.Name</td>
+                            <td>@product.Year</td>
+                            <td>@product.Num_Parts</td>
+                            <td>@product.Price</td>
+                            <td>@product.Img_Link</td>
+                            <td>@product.Primary_Color</td>
+                            <td>@product.Secondary_Color</td>
+                            <td>@product.Description</td>
+                            <td>@product.Category_1</td>
+                            <td>@product.Category_2</td>
+                            <td>
+                                <button class="edit-btn btn btn-primary">Edit</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
     </main>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('body').on('click', '.edit-btn', function () {
+                var $row = $(this).closest('tr');
+                if ($(this).text() === 'Edit') {
+                    // Convert text to input fields
+                    $row.find('td:not(:last)').each(function () {
+                        var text = $(this).text();
+                        $(this).addClass('editable-cell').html('<input type="text" class="form-control edit-input" value="' + text + '"/>');
+                    });
+
+                    $(this).text('Submit');
+                } else {
+                    // Ask for confirmation before updating
+                    var confirmUpdate = confirm("Are you sure you want to update this product?");
+                    if (confirmUpdate) {
+                        // User clicked "OK", proceed with update
+                        var data = {
+                            Product_Id: $row.data('product-id'),
+                            Name: $row.find('td input').eq(0).val(),
+                            Year: $row.find('td input').eq(1).val(),
+                            Num_Parts: $row.find('td input').eq(2).val(),
+                            Price: $row.find('td input').eq(3).val(),
+                            Img_Link: $row.find('td input').eq(4).val(),
+                            Primary_Color: $row.find('td input').eq(5).val(),
+                            Secondary_Color: $row.find('td input').eq(6).val(),
+                            Description: $row.find('td input').eq(7).val(),
+                            Category_1: $row.find('td input').eq(8).val(),
+                            Category_2: $row.find('td input').eq(9).val()
+                        };
+
+                        $(this).text('Updating').prop('disabled', true).addClass('btn-warning');
+
+                        $.post('/Home/UpdateProduct', data, function (response) {
+                            if (response.success) {
+                                // Iterate through each input field, replace with text
+                                alert('Product updated successfully!');
+                                $row.find('td:not(:last)').each(function (index) {
+                                    $(this).html(data[Object.keys(data)[index + 1]]);
+                                });
+                                $row.find('.edit-btn').text('Edit').prop('disabled', false).removeClass('btn-warning').addClass('btn-success');
+                            } else {
+                                // Handle error
+                                alert('Error: ' + response.message);
+                                $row.find('.edit-btn').text('Submit').prop('disabled', false).removeClass('btn-warning').addClass('btn-danger');
+                            }
+                        });
+                    } else {
+                        // User clicked "Cancel", revert back to text
+                        $row.find('td:not(:last)').each(function (index) {
+                            $(this).html(data[Object.keys(data)[index + 1]]);
+                        });
+                        $row.find('.edit-btn').text('Edit');
+                    }
+                }
+            });
+        });
+
+    </script>
 </body>

@@ -124,10 +124,25 @@ namespace INTEXII.Controllers
 
         // Admin Controller
         [Authorize(Roles = "Admin")]
-        public IActionResult AdminProducts()
+        public async Task<IActionResult> AdminProducts()
         {
-            return View();
+            var products = await context.Products.ToListAsync();
+            return View(products);
         }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateProduct(Product updatedProduct)
+        {
+            if (ModelState.IsValid)
+            {
+                context.Update(updatedProduct);
+                await context.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+            return Json(new { success = false, message = "Invalid product data" });
+        }
+
         [Authorize(Roles = "Admin")]
         public IActionResult AdminUsers()
         {

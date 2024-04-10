@@ -1304,7 +1304,7 @@ section {
     # Custom Styles
 */
 .content-below-nav {
-    padding-top: 400px;
+    padding-top: 30px;
 }
 
 /* Optional: Additional styling for the pagination container */
@@ -1326,3 +1326,25 @@ nav[aria-label="Page navigation"] {
 .pagination {
     gap: 10px; /* Ensures space between pagination items when they wrap */
 }
+
+.table-fixed-layout {
+    table-layout: fixed;
+    width: 100%;
+}
+
+    .table-fixed-layout th, .table-fixed-layout td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 0;
+    }
+
+.editable-cell {
+    max-width: 200px; /* Adjust based on your needs */
+}
+
+.edit-input {
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding does not add to the width */
+}
+
