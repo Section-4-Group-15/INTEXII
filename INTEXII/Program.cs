@@ -64,7 +64,7 @@ else
     app.UseExceptionHandler("/Home/Error");
 }
 
-// App Configuration
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -75,6 +75,14 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllerRoute(
+    name: "products",
+    pattern: "products/{pageNum?}",
+    defaults: new { controller = "Home", action = "Products" });
+app.MapControllerRoute(
+    name: "categories",
+    pattern: "products/{category}/{subcategory?}",
+    defaults: new { controller = "Products", action = "Category" });
 
 app.MapRazorPages();
 
