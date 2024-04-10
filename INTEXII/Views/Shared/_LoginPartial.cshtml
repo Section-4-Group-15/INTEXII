@@ -11,7 +11,7 @@
     @if (User.IsInRole("Admin"))
     {
         <li>
-            Admin Dashboard
+            <a asp-controller="Home" asp-action="AdminProducts">Manage Products</a>
         </li>
     }
     <li>

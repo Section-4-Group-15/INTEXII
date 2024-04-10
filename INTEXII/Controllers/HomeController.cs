@@ -104,6 +104,10 @@ namespace INTEXII.Controllers
         }
 
         // Admin Controller
+        public IActionResult AdminProducts()
+        {
+            return View();
+        }
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AssignRole(string userId)
         {
