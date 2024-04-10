@@ -8,7 +8,6 @@ namespace INTEXII.Models;
 public partial class Product
 {
     [Key]
-    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public byte Product_Id { get; set; }
 
     public string Name { get; set; } = null!;
