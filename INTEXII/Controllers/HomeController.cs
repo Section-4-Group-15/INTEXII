@@ -126,9 +126,10 @@ namespace INTEXII.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminProducts()
         {
-            var products = await context.Products.ToListAsync();
+            var products = await context.Products.OrderBy(p => p.Product_Id).ToListAsync();
             return View(products);
         }
+
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
@@ -141,6 +142,51 @@ namespace INTEXII.Controllers
                 return Json(new { success = true });
             }
             return Json(new { success = false, message = "Invalid product data" });
+        }
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddProduct(Product newProduct)
+        {
+            try {
+
+                // Workaround for database-generated identity column, since we are using preexisting data
+                var maxProductId = await context.Products.MaxAsync(p => (int?)p.Product_Id) ?? 0;
+                newProduct.Product_Id = (byte)(maxProductId + 1);
+
+                if (ModelState.IsValid)
+                {
+                    context.Products.Add(newProduct);
+                    await context.SaveChangesAsync();
+                    return Json(new { success = true });
+                }
+                return Json(new { success = false, message = "Invalid product data" });
+                } 
+            catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error adding product");
+                    return Json(new { success = false, message = "Error adding product" });
+                }
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteProduct(byte Product_Id)
+        {
+            try { 
+                var product = await context.Products.FindAsync(Product_Id);
+                if (product != null)
+                {
+                    context.Products.Remove(product);
+                    await context.SaveChangesAsync();
+                    return Json(new { success = true });
+                }
+                return Json(new { success = false, message = "Product not found" });
+                } 
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting product");
+                return Json(new { success = false, message = "Error deleting product" });
+            }
         }
 
         [Authorize(Roles = "Admin")]
