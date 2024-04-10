@@ -232,6 +232,66 @@ namespace INTEXII.Controllers
 
             return View(model);
         }
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> AddToCart(int productId, int quantity)
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                var userId = _userManager.GetUserId(User);
+                var product = await context.Products.FindAsync(productId);
+
+                if (product != null)
+                {
+                    var cartItem = await context.CartProducts.FirstOrDefaultAsync(cp => cp.user_Id == userId && cp.product_Id == productId);
+
+                    if (cartItem == null)
+                    {
+                        cartItem = new CartProduct
+                        {
+                            user_Id = userId,
+                            product_Id = productId,
+                            quantity = quantity,
+                            cost = (decimal)product.Price
+                        };
+
+                        context.CartProducts.Add(cartItem);
+                    }
+                    else
+                    {
+                        cartItem.quantity += quantity;
+                    }
+
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            return RedirectToAction("Cart");
+        }
+        // Cart View
+        [Authorize]
+        public async Task<IActionResult> Cart()
+        {
+            try { 
+                if (User.Identity.IsAuthenticated)
+                {
+                    var userId = _userManager.GetUserId(User);
+                    var cartItems = await context.CartProducts
+                    .Where(cp => cp.user_Id == userId)
+                    .Include(cp => cp.Product) // Use the navigation property here
+                    .ToListAsync();
+
+                    return View(cartItems);
+                }
+
+                return RedirectToAction("Index");
+                } 
+            catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error getting cart");
+                    return RedirectToAction("Error");
+                }
+        }
 
         // Admin Controller
         [Authorize(Roles = "Admin")]
@@ -262,7 +322,7 @@ namespace INTEXII.Controllers
 
                 // Workaround for database-generated identity column, since we are using preexisting data
                 var maxProductId = await context.Products.MaxAsync(p => (int?)p.Product_Id) ?? 0;
-                newProduct.Product_Id = (byte)(maxProductId + 1);
+                newProduct.Product_Id = (int)(maxProductId + 1);
 
                 if (ModelState.IsValid)
                 {
@@ -281,7 +341,7 @@ namespace INTEXII.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteProduct(byte Product_Id)
+        public async Task<IActionResult> DeleteProduct(int Product_Id)
         {
             try { 
                 var product = await context.Products.FindAsync(Product_Id);
