@@ -15,41 +15,20 @@
                     <div class="col-12">
                         <div class="swiper sliderFeaturedPosts">
                             <div class="swiper-wrapper">
-                                <div class="swiper-slide">
-                                    <a href="~/ZenBlog/single-post.cshtml" class="img-bg d-flex align-items-end" style="background-image: url('ZenBlog/assets/img/typewriter.jpg');">
-                                        <div class="img-bg-inner">
-                                            <h2>Typewriter</h2>
-                                            <p>The typewriter LEGO set beautifully combines nostalgia and craftsmanship, capturing the essence of a bygone era with its intricate design and functional details.</p>
+                                @if (ViewData["RandomProducts"] != null)
+                                {
+                                    var randomProducts = ViewData["RandomProducts"] as List<Product>;
+                                    foreach (var product in randomProducts)
+                                    {
+                                        <div class="swiper-slide">
+                                            <a href="@Url.Action("IndProducts", new { id = product.Product_Id })" class="img-bg d-flex align-items-end" style="background-image: url('@product.Img_Link'); background-size: contain; background-repeat: no-repeat; background-position: center; height: 400px;">
+                                                <div class="img-bg-inner">
+                                                    <h2>@product.Name</h2>
+                                                </div>
+                                            </a>
                                         </div>
-                                    </a>
-                                </div>
-
-                                <div class="swiper-slide">
-                                    <a href="~/ZenBlog/single-post.cshtml" class="img-bg d-flex align-items-end" style="background-image: url('ZenBlog/assets/img/paris.jpg');">
-                                        <div class="img-bg-inner">
-                                            <h2>Paris</h2>
-                                            <p>The Architecture Paris LEGO set elegantly showcases the timeless beauty of the city's architectural marvels, from the majestic Louvre Pyramid to the graceful arcs of the Arc de Triomphe, offering builders a sophisticated homage to Parisian grandeur in miniature form.</p>
-                                        </div>
-                                    </a>
-                                </div>
-
-                                <div class="swiper-slide">
-                                    <a href="~/ZenBlog/single-post.cshtml" class="img-bg d-flex align-items-end" style="background-image: url('ZenBlog/assets/img/madrigal.jpg');">
-                                        <div class="img-bg-inner">
-                                            <h2>Casa Madrigal</h2>
-                                            <p>The LEGO Casa Madrigal set invites builders into the vibrant world of Disney's "Encanto," capturing the colorful charm and magic of the Colombian village with its intricately designed buildings and beloved characters, inspiring imagination and storytelling in every brick.</p>
-                                        </div>
-                                    </a>
-                                </div>
-
-                                <div class="swiper-slide">
-                                    <a href="~/ZenBlog/single-post.cshtml" class="img-bg d-flex align-items-end" style="background-image: url('ZenBlog/assets/img/chopper.jpg');">
-                                        <div class="img-bg-inner">
-                                            <h2>Surveillance Chopper</h2>
-                                            <p>The LEGO Surveillance Chopper set combines sleek design with advanced functionality, offering builders the thrill of high-tech espionage as they assemble a detailed model complete with rotating blades, surveillance equipment, and a team of elite minifigure operatives ready to embark on daring missions.</p>
-                                        </div>
-                                    </a>
-                                </div>
+                                    }
+                                }
                             </div>
                             <div class="custom-swiper-button-next">
                                 <span class="bi-chevron-right"></span>
@@ -91,6 +70,7 @@
             </div>
         </section><!-- End Aurora Bricks Section -->
         <!-- ======= Recommended Items Section ======= -->
+        <!-- ======= Recommended Items Section ======= -->
         <section id="recommended-items" class="recommended-items">
             <div class="container" data-aos="fade-up">
                 <div class="section-title text-center">
@@ -113,8 +93,8 @@
                         {
                             <div class="col-lg-3 col-md-6 col-12">
                                 <div class="recommended-item text-center">
-                                    <a href="link-to-item-1">
-                                        <img src="@recommendation.RecommendationUrl" alt="@recommendation.RecommendationName" class="img-fluid">
+                                    <a href="@Url.Action("IndProducts", new { id = recommendation.Product_ID })">
+                                        <img src="@recommendation.RecommendationUrl" alt="@recommendation.RecommendationName" class="img-fluid" style="max-height: 200px; width: auto;">
                                         <h3>@recommendation.RecommendationName</h3>
                                     </a>
                                 </div>
@@ -127,55 +107,45 @@
                         <!-- Item 1 -->
                         <div class="col-lg-3 col-md-6 col-12">
                             <div class="recommended-item text-center">
-                                <a href="link-to-item-1">
-                                    <img src="https://www.lego.com/cdn/cs/set/assets/bltfa6c9196a514bb03/31157.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1" alt="Item 1" class="img-fluid">
+                                <a href="@Url.Action("IndProducts", new { id = 1 })">
+                                    <img src="https://www.lego.com/cdn/cs/set/assets/bltfa6c9196a514bb03/31157.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1" alt="Item 1" class="img-fluid" style="max-height: 200px; width: auto;">
                                     <h3>Exotic Peacock</h3>
                                 </a>
-                                <p>Short description of Item 1.</p>
                             </div>
                         </div>
                         <!-- Item 2 -->
                         <div class="col-lg-3 col-md-6 col-12">
                             <div class="recommended-item text-center">
-                                <a href="link-to-item-2">
-                                    <img src="https://www.lego.com/cdn/cs/set/assets/blt2ab62c2c368f72f6/31152.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1" alt="Item 2" class="img-fluid">
+                                <a href="@Url.Action("IndProducts", new { id = 2 })">
+                                    <img src="https://www.lego.com/cdn/cs/set/assets/blt2ab62c2c368f72f6/31152.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1" alt="Item 2" class="img-fluid" style="max-height: 200px; width: auto;">
                                     <h3>Space Astronaut</h3>
                                 </a>
-                                <p>Short description of Item 2.</p>
                             </div>
                         </div>
                         <!-- Item 3 -->
                         <div class="col-lg-3 col-md-6 col-12">
                             <div class="recommended-item text-center">
-                                <a href="link-to-item-3">
-                                    <img src="https://www.lego.com/cdn/cs/set/assets/bltde655e8359417b7d/43217.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1" alt="Item 3" class="img-fluid">
+                                <a href="@Url.Action("IndProducts", new { id = 3 })">
+                                    <img src="https://www.lego.com/cdn/cs/set/assets/bltde655e8359417b7d/43217.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1" alt="Item 3" class="img-fluid" style="max-height: 200px; width: auto;">
                                     <h3>Up House</h3>
                                 </a>
-                                <p>Short description of Item 3.</p>
                             </div>
                         </div>
                         <!-- Item 4 -->
                         <div class="col-lg-3 col-md-6 col-12">
                             <div class="recommended-item text-center">
-                                <a href="link-to-item-4">
-                                    <img src="https://www.lego.com/cdn/cs/set/assets/blt47c94c595257dd3a/76429.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1" alt="Item 4" class="img-fluid">
+                                <a href="@Url.Action("IndProducts", new { id = 4 })">
+                                    <img src="https://www.lego.com/cdn/cs/set/assets/blt47c94c595257dd3a/76429.png?format=webply&fit=bounds&quality=75&width=800&height=800&dpr=1" alt="Item 4" class="img-fluid" style="max-height: 200px; width: auto;">
                                     <h3>Talking Sorting Hat</h3>
                                 </a>
-                                <p>Short description of Item 4.</p>
                             </div>
                         </div>
                     }
                 </div>
             </div>
         </section>
-
         <!-- End Recommended Items Section -->
 
-
-
-
-
-        
+        <!-- End Recommended Items Section -->
     </main><!-- End #main -->
-
 </body>

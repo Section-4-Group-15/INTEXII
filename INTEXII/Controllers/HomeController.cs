@@ -36,18 +36,20 @@ namespace INTEXII.Controllers
                     .Where(ur => ur.Email == userEmail)
                     .ToList();
             }
-            //else
-            //{
-            //    // Fetch generic recommendations if no user is logged in or no user-specific recommendations are found
-            //    recommendations = context.UserRecs
-            //        .Where(ur => ur.Person_ID == 0)
-            //        .ToList();
-            //}
 
+            // Retrieve 5 random products
+            var randomProducts = context.Products
+                .OrderBy(x => Guid.NewGuid())
+                .Take(5)
+                .ToList();
+
+            // Pass the random products to the view
+            ViewData["RandomProducts"] = randomProducts;
+
+            // Pass the recommendations to the view
             ViewData["Recommendations"] = recommendations;
 
-            var products = context.Products.ToList();
-            return View(products);
+            return View();
         }
 
 
