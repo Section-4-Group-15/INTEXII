@@ -88,6 +88,7 @@ namespace INTEXII.Controllers
 
         public IActionResult Products(int pageNum, List<string> categories, List<string> colors)
         {
+            var pageSize = 6; // Set page size
             // Ensure pageNum is at least 1 to avoid negative offset
             pageNum = Math.Max(1, pageNum);
 
