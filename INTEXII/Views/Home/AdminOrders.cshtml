@@ -1,0 +1,96 @@
+﻿@{
+    ViewData["Title"] = "Admin - Orders";
+}
+@model IEnumerable<INTEXII.Models.Order>
+
+@{
+    ViewData["Title"] = "Admin - Orders";
+    int totalOrders = (int)ViewData["TotalOrders"];
+    int currentPage = (int)ViewData["CurrentPage"];
+    int pageSize = 100;
+    int totalPages = (int)Math.Ceiling((double)totalOrders / pageSize);
+}
+
+<body>
+    <main id="main">
+        <h1>Order Management</h1>
+
+        @if (Model.Any())
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Customer ID</th>
+                        <th>Date</th>
+                        <th>Day of Week</th>
+                        <th>Time</th>
+                        <th>Amount</th>
+                        <th>Type of Transaction</th>
+                        <th>Country of Transaction</th>
+                        <th>Shipping Address</th>
+                        <th>Bank</th>
+                        <th>Type of Card</th>
+                        <th>Fraud</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model)
+                    {
+                        <tr>
+                            <td>@order.Transaction_Id</td>
+                            <td>@order.Customer_Id</td>
+                            <td>@order.Date?.ToString("yyyy-MM-dd")</td>
+                            <td>@order.Day_Of_Week</td>
+                            <td>@order.Time</td>
+                            <td>@order.Amount</td>
+                            <td>@order.Type_Of_Transaction</td>
+                            <td>@order.Country_Of_Transaction</td>
+                            <td>@order.Shipping_Address</td>
+                            <td>@order.Bank</td>
+                            <td>@order.Type_Of_Card</td>
+                            <td>@(order.Fraud == 1 ? "True" : "False")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <nav aria-label="Page navigation" class="pagination-wrapper">
+                <ul class="pagination flex-wrap justify-content-center">
+                    @if (currentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="AdminOrders" asp-route-page="@(currentPage - 1)" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    }
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link" asp-action="AdminOrders" asp-route-page="@i">@i</a>
+                        </li>
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="AdminOrders" asp-route-page="@(currentPage + 1)" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+
+
+
+        }
+        else
+        {
+            <p>No orders found.</p>
+        }
+    </main>
+</body>
+

@@ -116,15 +116,115 @@ namespace INTEXII.Controllers
             return View(model);
         }
 
-
-
-
         public IActionResult Error()
         {
             return View();
         }
 
         // Admin Controller
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminProducts()
+        {
+            var products = await context.Products.OrderBy(p => p.Product_Id).ToListAsync();
+            return View(products);
+        }
+
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UpdateProduct(Product updatedProduct)
+        {
+            if (ModelState.IsValid)
+            {
+                context.Update(updatedProduct);
+                await context.SaveChangesAsync();
+                return Json(new { success = true });
+            }
+            return Json(new { success = false, message = "Invalid product data" });
+        }
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddProduct(Product newProduct)
+        {
+            try {
+
+                // Workaround for database-generated identity column, since we are using preexisting data
+                var maxProductId = await context.Products.MaxAsync(p => (int?)p.Product_Id) ?? 0;
+                newProduct.Product_Id = (byte)(maxProductId + 1);
+
+                if (ModelState.IsValid)
+                {
+                    context.Products.Add(newProduct);
+                    await context.SaveChangesAsync();
+                    return Json(new { success = true });
+                }
+                return Json(new { success = false, message = "Invalid product data" });
+                } 
+            catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error adding product");
+                    return Json(new { success = false, message = "Error adding product" });
+                }
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteProduct(byte Product_Id)
+        {
+            try { 
+                var product = await context.Products.FindAsync(Product_Id);
+                if (product != null)
+                {
+                    context.Products.Remove(product);
+                    await context.SaveChangesAsync();
+                    return Json(new { success = true });
+                }
+                return Json(new { success = false, message = "Product not found" });
+                } 
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting product");
+                return Json(new { success = false, message = "Error deleting product" });
+            }
+        }
+
+        [Authorize(Roles = "Admin")]
+        public IActionResult AdminUsers()
+        {
+            return View();
+        }
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminOrders(int page = 1)
+        {
+            int pageSize = 100; // Set page size
+
+            try
+            {
+                // Order by Date descending, then by Time descending to get most recent orders first
+                var ordersQuery = context.Orders
+                                         .OrderByDescending(o => o.Date)
+                                         .ThenByDescending(o => o.Time)
+                                         .AsQueryable();
+
+                var orders = await ordersQuery
+                                     .Skip((page - 1) * pageSize)
+                                     .Take(pageSize)
+                                     .ToListAsync();
+
+                // Pass total order count and current page to the view for pagination
+                ViewData["TotalOrders"] = ordersQuery.Count();
+                ViewData["CurrentPage"] = page;
+
+                return View(orders);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting orders");
+                return RedirectToAction("Error");
+            }
+        }
+
+
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AssignRole(string userId)
         {
