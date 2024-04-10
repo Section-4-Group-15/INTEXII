@@ -42,10 +42,8 @@ namespace INTEXII.Controllers
         {
             return View();
         }
-        public IActionResult Products(int pageNum, List<string> categories, List<string> colors)
+        public IActionResult Products(int pageNum, List<string> categories, List<string> colors, int pageSize = 5)
         {
-            int pageSize = 5;
-
             // Ensure pageNum is at least 1 to avoid negative offset
             pageNum = Math.Max(1, pageNum);
 
@@ -113,6 +111,7 @@ namespace INTEXII.Controllers
 
             ViewBag.SelectedCategories = categories; // Pass selected categories to the view
             ViewBag.SelectedColors = colors; // Pass selected colors to the view
+            ViewBag.PageSize = pageSize; // Pass the page size to the view
 
             return View(model);
         }
