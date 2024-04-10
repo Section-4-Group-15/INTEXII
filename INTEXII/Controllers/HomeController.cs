@@ -21,22 +21,22 @@ namespace INTEXII.Controllers
         {
             var userEmail = User.Identity.IsAuthenticated ? User.Identity.Name : null;
 
-            List<UserRec> recommendations;
+            List<UserRec> recommendations = null;
 
             if (!string.IsNullOrEmpty(userEmail))
             {
                 // Retrieve user-specific recommendations based on their email
-                recommendations = context.UserRec
+                recommendations = context.UserRecs
                     .Where(ur => ur.Email == userEmail)
                     .ToList();
             }
-            else
-            {
-                // Fetch generic recommendations if no user is logged in or no user-specific recommendations are found
-                recommendations = context.UserRec
-                    .Where(ur => ur.Person_ID == 0)
-                    .ToList();
-            }
+            //else
+            //{
+            //    // Fetch generic recommendations if no user is logged in or no user-specific recommendations are found
+            //    recommendations = context.UserRecs
+            //        .Where(ur => ur.Person_ID == 0)
+            //        .ToList();
+            //}
 
             ViewData["Recommendations"] = recommendations;
 

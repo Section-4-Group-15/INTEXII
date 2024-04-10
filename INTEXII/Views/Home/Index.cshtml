@@ -94,8 +94,16 @@
         <section id="recommended-items" class="recommended-items">
             <div class="container" data-aos="fade-up">
                 <div class="section-title text-center">
-                    <h2>Recommended for You</h2>
-                    <p>Explore our top picks to complement your creativity.</p>
+                    @if (ViewData["Recommendations"] != null)
+                    {
+                        <h2>Recommended for You</h2>
+                        <p>Explore our top picks to complement your creativity.</p>
+                    }
+                    else
+                    {
+                        <h2>Explore Fan Favorites</h2>
+                        <p>Discover our most popular items loved by LEGO enthusiasts.</p>
+                    }
                 </div>
                 <div class="row justify-content-center">
                     @if (ViewData["Recommendations"] != null)
@@ -105,8 +113,10 @@
                         {
                             <div class="col-lg-3 col-md-6 col-12">
                                 <div class="recommended-item text-center">
-                                    <img src="@recommendation.RecommendationUrl" alt="@recommendation.RecommendationName" class="img-fluid">
-                                    <h3>@recommendation.RecommendationName</h3>
+                                    <a href="link-to-item-1">
+                                        <img src="@recommendation.RecommendationUrl" alt="@recommendation.RecommendationName" class="img-fluid">
+                                        <h3>@recommendation.RecommendationName</h3>
+                                    </a>
                                 </div>
                             </div>
                         }
