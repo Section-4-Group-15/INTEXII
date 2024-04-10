@@ -68,7 +68,6 @@ namespace INTEXII.Controllers
         {
             return View();
         }
-<<<<<<< HEAD
         [HttpGet]
         public IActionResult CreateCookie()
         {
@@ -88,9 +87,6 @@ namespace INTEXII.Controllers
         }
 
         public IActionResult Products(int pageNum, List<string> categories, List<string> colors)
-=======
-        public IActionResult Products(int pageNum, List<string> categories, List<string> colors, int pageSize = 5)
->>>>>>> a6859c7439cc194cc2ed2f4c9a23cbbc2d6b8b26
         {
             // Ensure pageNum is at least 1 to avoid negative offset
             pageNum = Math.Max(1, pageNum);
