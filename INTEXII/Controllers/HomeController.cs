@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using INTEXII.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http;
+using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime.Tensors;
 
 namespace INTEXII.Controllers
 {
@@ -15,12 +18,26 @@ namespace INTEXII.Controllers
         private BrickwellContext context { get; set; }
 
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public HomeController(ILogger<HomeController> logger, BrickwellContext con, UserManager<IdentityUser> userManager)
+        private readonly InferenceSession _session;
+
+        public HomeController(ILogger<HomeController> logger, BrickwellContext con, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _logger = logger;
             _userManager = userManager;
+            _roleManager = roleManager;
             context = con;
+
+            try
+            {
+                _session = new InferenceSession("fraud_model.onnx");
+                _logger.LogInformation("ONNX model loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error leading the ONNX model.");
+            }
         }
 
         private int GetCartItemCount()
@@ -287,6 +304,44 @@ namespace INTEXII.Controllers
                 return RedirectToAction("Error");
             }
         }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> UpdateQuantity(int productId, int quantity)
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                var userId = _userManager.GetUserId(User);
+                var cartItem = await context.CartProducts.FirstOrDefaultAsync(cp => cp.user_Id == userId && cp.product_Id == productId);
+
+                if (cartItem != null)
+                {
+                    cartItem.quantity = quantity;
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            return RedirectToAction("Cart");
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> RemoveFromCart(int productId)
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                var userId = _userManager.GetUserId(User);
+                var cartItem = await context.CartProducts.FirstOrDefaultAsync(cp => cp.user_Id == userId && cp.product_Id == productId);
+
+                if (cartItem != null)
+                {
+                    context.CartProducts.Remove(cartItem);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            return RedirectToAction("Cart");
+        }
         [Authorize]
         public async Task<IActionResult> CheckoutForm()
         {
@@ -426,13 +481,6 @@ namespace INTEXII.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public IActionResult AdminUsers()
-        {
-            ViewBag.CartItemCount = GetCartItemCount();
-            return View();
-        }
-
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminOrders(int page = 1)
         {
             ViewBag.CartItemCount = GetCartItemCount();
@@ -489,5 +537,272 @@ namespace INTEXII.Controllers
         {
             return View();
         }
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminUsers()
+        {
+            var users = await _userManager.Users.ToListAsync();
+            return View(users);
+        }
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleUserRole(string userId, string role)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            if (userRoles.Contains(role))
+            {
+                await _userManager.RemoveFromRoleAsync(user, role);
+            }
+            else
+            {
+                await _userManager.AddToRoleAsync(user, role);
+            }
+
+            return RedirectToAction("Users");
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddUser(IdentityUser model, string role)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _userManager.CreateAsync(model);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(model, role);
+                    return RedirectToAction("Users");
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                }
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null)
+            {
+                await _userManager.DeleteAsync(user);
+            }
+
+            return RedirectToAction("Users");
+        }
+
+        [HttpGet]
+        public IActionResult AddOrderAdmin()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddOrderAdmin(Order newOrder)
+        {
+            // Dictionary mapping the numeric prediction to an animal type
+            var fraud_type_dict = new Dictionary<int, string>
+            {
+                {0, "Good Purchase" },
+                {1, "Fraudulent Purchase"},
+            };
+
+            //Calculate Days since January 1, 2022
+            var january1_2022 = new DateOnly(2022, 1, 1);
+            var recordDate = newOrder.Date.HasValue ? new DateTime(newOrder.Date.Value.Year, newOrder.Date.Value.Month, newOrder.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+            var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+
+            try
+            {
+                var input = new List<float>
+                    {
+                        (float)newOrder.Customer_Id,
+                        (float)newOrder.Time,
+                        // fix amount if its null
+                        (float)(newOrder.Amount ?? 0),
+
+                        //fix date
+                        daysSinceJan2022,
+
+                        // Check the dummy coded data
+                        newOrder.Day_Of_Week == "Mon" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Sat" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Sun" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Thu" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Tue" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Wed" ? 1 : 0,
+
+                        newOrder.Entry_Mode == "Pin" ? 1 : 0,
+                        newOrder.Entry_Mode == "Tap" ? 1 : 0,
+
+                        newOrder.Type_Of_Transaction == "Online" ? 1 : 0,
+                        newOrder.Type_Of_Transaction == "POS" ? 1 : 0,
+
+                        newOrder.Country_Of_Transaction == "India" ? 1 : 0,
+                        newOrder.Country_Of_Transaction == "Russia" ? 1 : 0,
+                        newOrder.Country_Of_Transaction == "USA" ? 1 : 0,
+                        newOrder.Country_Of_Transaction == "United Kingdom" ? 1 : 0,
+
+                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "India" ? 1 : 0,
+                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "Russia" ? 1 : 0,
+                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "USA" ? 1 : 0,
+                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "United Kingdom" ? 1 : 0,
+
+                        newOrder.Bank == "HSBC" ? 1 : 0,
+                        newOrder.Bank == "Halifax" ? 1 : 0,
+                        newOrder.Bank == "Lloyds" ? 1 : 0,
+                        newOrder.Bank == "Metro" ? 1 : 0,
+                        newOrder.Bank == "Monzo" ? 1 : 0,
+                        newOrder.Bank == "RBS" ? 1 : 0,
+
+                        newOrder.Type_Of_Card == "Visa" ? 1 : 0,
+
+                        (float)newOrder.Fraud
+                    };
+
+                var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
+
+                var inputs = new List<NamedOnnxValue>
+                {
+                    NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
+                };
+
+                using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form (i.e. class_type 1-7)
+                {
+                    var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
+                    if (prediction != null && prediction.Length > 0)
+                    {
+                        // Use the prediction to get the animal type from the dictionary
+                        var fraudType = fraud_type_dict.GetValueOrDefault((int)prediction[0], "Unknown");
+                        ViewBag.Prediction = fraudType;
+
+                        // Workaround for database-generated identity column, since we are using preexisting data
+                        var maxProductId = await context.Orders.MaxAsync(o => (int?)o.Transaction_Id) ?? 0;
+                        newOrder.Transaction_Id = (int)(maxProductId + 1);
+
+                        if (ModelState.IsValid)
+                        {
+                            context.Orders.Add(newOrder);
+                            await context.SaveChangesAsync();
+                            // return Json(new { success = true });
+                        }
+                        // return Json(new { success = false, message = "Invalid order data" });
+                    }
+                    else
+                    {
+                        ViewBag.Prediction = "Error: Unable to make a prediction.";
+                    }
+                }
+
+                _logger.LogInformation("Prediction executed successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error during prediction: {ex.Message}");
+                ViewBag.Prediction = "Error during prediction.";
+            }
+
+            return View();
+        }
+
+
+        //public IActionResult Predict()
+        //{
+        //    var records = context.Orders
+        //        .OrderByDescending(o => o.Date)
+        //        .Take(20)
+        //        .ToList();
+        //    var predictions = new List<OrderPrediction>();
+
+        //    var fraud_type_dict = new Dictionary<int, string>
+        //    {
+        //        {0, "no" },
+        //        {1, "yes"},
+        //    };
+
+        //    foreach (var record in records)
+        //    {
+        //        //Calculate Days since January 1, 2022
+        //        var january1_2022 = new DateOnly(2022, 1, 1);
+        //        var recordDate = record.Date.HasValue ? new DateTime(record.Date.Value.Year, record.Date.Value.Month, record.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+        //        var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+
+        //        var input = new List<float>
+        //            {
+        //                (float)record.Customer_Id,
+        //                (float)record.Time,
+        //                // fix amount if its null
+        //                (float)(record.Amount ?? 0),
+
+        //                //fix date
+        //                daysSinceJan2022,
+
+        //                // Check the dummy coded data
+        //                record.Day_Of_Week == "Mon" ? 1 : 0,
+        //                record.Day_Of_Week == "Sat" ? 1 : 0,
+        //                record.Day_Of_Week == "Sun" ? 1 : 0,
+        //                record.Day_Of_Week == "Thu" ? 1 : 0,
+        //                record.Day_Of_Week == "Tue" ? 1 : 0,
+        //                record.Day_Of_Week == "Wed" ? 1 : 0,
+
+        //                record.Entry_Mode == "Pin" ? 1 : 0,
+        //                record.Entry_Mode == "Tap" ? 1 : 0,
+
+        //                record.Type_Of_Transaction == "Online" ? 1 : 0,
+        //                record.Type_Of_Transaction == "POS" ? 1 : 0,
+
+        //                record.Country_Of_Transaction == "India" ? 1 : 0,
+        //                record.Country_Of_Transaction == "Russia" ? 1 : 0,
+        //                record.Country_Of_Transaction == "USA" ? 1 : 0,
+        //                record.Country_Of_Transaction == "United Kingdom" ? 1 : 0,
+
+        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "India" ? 1 : 0,
+        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "Russia" ? 1 : 0,
+        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "USA" ? 1 : 0,
+        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "United Kingdom" ? 1 : 0,
+
+        //                record.Bank == "HSBC" ? 1 : 0,
+        //                record.Bank == "Halifax" ? 1 : 0,
+        //                record.Bank == "Lloyds" ? 1 : 0,
+        //                record.Bank == "Metro" ? 1 : 0,
+        //                record.Bank == "Monzo" ? 1 : 0,
+        //                record.Bank == "RBS" ? 1 : 0,
+
+        //                record.Type_Of_Card == "Visa" ? 1 : 0
+        //            };
+        //        var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
+
+        //        var inputs = new List<NamedOnnxValue>
+        //            {
+        //                NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
+        //            };
+
+        //        string predictionResult;
+
+
+        //        using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form
+        //        {
+        //            var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
+        //            predictionResult = prediction != null && prediction.Length > 0 ? fraud_type_dict.GetValueOrDefault((int)prediction[0], "Unknown") : "Error in prediction";
+        //        }
+
+        //        predictions.Add(new OrderPrediction { Orders = record, Prediction = predictionResult }); // Add the prediction to the db
+        //    }
+
+        //    return View(predictions);
+        //}
     }
 }
