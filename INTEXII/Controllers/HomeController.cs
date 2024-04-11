@@ -15,11 +15,13 @@ namespace INTEXII.Controllers
         private BrickwellContext context { get; set; }
 
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public HomeController(ILogger<HomeController> logger, BrickwellContext con, UserManager<IdentityUser> userManager)
+        public HomeController(ILogger<HomeController> logger, BrickwellContext con, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _logger = logger;
             _userManager = userManager;
+            _roleManager = roleManager;
             context = con;
         }
 
@@ -426,13 +428,6 @@ namespace INTEXII.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public IActionResult AdminUsers()
-        {
-            ViewBag.CartItemCount = GetCartItemCount();
-            return View();
-        }
-
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminOrders(int page = 1)
         {
             ViewBag.CartItemCount = GetCartItemCount();
@@ -488,6 +483,71 @@ namespace INTEXII.Controllers
         public IActionResult Error()
         {
             return View();
+        }
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminUsers()
+        {
+            var users = await _userManager.Users.ToListAsync();
+            return View(users);
+        }
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleUserRole(string userId, string role)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            if (userRoles.Contains(role))
+            {
+                await _userManager.RemoveFromRoleAsync(user, role);
+            }
+            else
+            {
+                await _userManager.AddToRoleAsync(user, role);
+            }
+
+            return RedirectToAction("Users");
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddUser(IdentityUser model, string role)
+        {
+            if (ModelState.IsValid)
+            {
+                var result = await _userManager.CreateAsync(model);
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(model, role);
+                    return RedirectToAction("Users");
+                }
+                else
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                }
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user != null)
+            {
+                await _userManager.DeleteAsync(user);
+            }
+
+            return RedirectToAction("Users");
         }
     }
 }
