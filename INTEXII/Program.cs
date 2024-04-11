@@ -14,6 +14,7 @@ services.AddAuthentication().AddGoogle(googleOptions =>
     googleOptions.ClientSecret = configuration["Authentication:Google:ClientSecret"];
 });
 
+
 var connection = String.Empty;
 if (builder.Environment.IsDevelopment())
 {
