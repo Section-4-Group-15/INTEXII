@@ -151,26 +151,26 @@
 
         function showPopup(productName) {
             var popupHtml = `
-                        <div class="modal" tabindex="-1" role="dialog" id="addToCartModal">
-                            <div class="modal-dialog" role="document">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Item Added to Cart</h5>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <p>${productName} has been added to your cart.</p>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="redirectToProducts()">Continue Shopping</button>
-                                        <a href="@Url.Action("Cart", "Home")" class="btn btn-primary">Checkout</a>
+                                <div class="modal" tabindex="-1" role="dialog" id="addToCartModal">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Item Added to Cart</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>${productName} has been added to your cart.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="redirectToProducts()">Continue Shopping</button>
+                                                <a href="@Url.Action("Cart", "Home")" class="btn btn-primary">Checkout</a>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    `;
+                            `;
 
             $('body').append(popupHtml);
             $('#addToCartModal').modal('show');
@@ -206,4 +206,4 @@
             .Replace("‚Ä†", "†")
             .Replace("‚Äˇ", "ˇ");
     }
-} 
+}  
