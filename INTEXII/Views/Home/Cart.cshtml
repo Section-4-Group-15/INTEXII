@@ -1,4 +1,8 @@
-﻿@model List<CartProduct>
+﻿@{
+    ViewData["Title"] = "Cart";
+}
+
+@model List<CartProduct>
 
 <h2>Shopping Cart</h2>
 
@@ -30,6 +34,11 @@
             </tr>
         </tbody>
     </table>
+    <div class="text-center mt-3">
+        <form asp-controller="Home" asp-action="CheckoutForm">
+            <button type="submit" class="btn btn-primary">Proceed to Checkout</button>
+        </form>
+    </div>
 }
 else
 {

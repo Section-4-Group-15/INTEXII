@@ -242,7 +242,6 @@ namespace INTEXII.Controllers
             return RedirectToAction("Cart");
         }
 
-        // Cart View
         [Authorize]
         public async Task<IActionResult> Cart()
         {
@@ -269,6 +268,52 @@ namespace INTEXII.Controllers
                 return RedirectToAction("Error");
             }
         }
+        [Authorize]
+        public async Task<IActionResult> CheckoutForm()
+        {
+            try
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    var userId = _userManager.GetUserId(User);
+                    var cartItems = await context.CartProducts
+                        .Where(cp => cp.user_Id == userId)
+                        .ToListAsync();
+
+                    var subtotal = cartItems.Sum(item => item.cost * item.quantity);
+                    ViewBag.Subtotal = subtotal.ToString("C");
+
+                    return View();
+                }
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting checkout form");
+                return RedirectToAction("Error");
+            }
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> SubmitOrder(string address)
+        {
+            try
+            {
+                // Logic to create an order record goes here
+                _logger.LogInformation($"Order submitted for address: {address}"); // DEBUG
+
+                // Implement order confirmation popup or redirect as needed
+                return RedirectToAction("OrderConfirmation");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error submitting order");
+                return RedirectToAction("Error");
+            }
+        }
+
 
         // Admin Controller
         [Authorize(Roles = "Admin")]
