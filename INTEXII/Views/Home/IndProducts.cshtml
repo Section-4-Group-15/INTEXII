@@ -28,9 +28,20 @@
         .product-info {
             margin-top: 20px;
         }
+
+        .back-button {
+            text-align: left;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
+    <header>
+        <div class="back-button">
+            <a asp-controller="Home" asp-action="Products" class="btn btn-primary">Back</a>
+        </div>
+    </header>
+
     <div class="container">
         <h1 class="text-center">@ReplaceSpecialCharacters(Model.Products.FirstOrDefault()?.Name)</h1>
 
@@ -64,10 +75,10 @@
 
 
                 <!-- Purchase Options -->
-                <form asp-controller="Home" asp-action="AddToCart" method="post">
+                <form id="addToCartForm" asp-controller="Home" asp-action="AddToCart" method="post">
                     <input type="hidden" name="productId" value="@Model.Products.FirstOrDefault()?.product_ID" />
                     <input type="hidden" name="quantity" value="1" />
-                    <button type="submit" class="btn btn-primary">Add to Cart</button>
+                    <button type="submit" class="btn btn-primary" id="addToCartButton">Add to Cart</button>
                 </form>
             </div>
 
@@ -111,9 +122,64 @@
             </div>
         </section>
     </div>
+
     <!-- Bootstrap JS and dependencies (jQuery, Popper.js, Bootstrap) -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#addToCartForm').submit(function (event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("AddToCart", "Home")',
+                    data: $(this).serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            showPopup(response.productName);
+                        } else {
+                            alert('Failed to add the item to the cart.');
+                        }
+                    },
+                    error: function () {
+                        alert('An error occurred while adding the item to the cart.');
+                    }
+                });
+            });
+        });
+
+        function showPopup(productName) {
+            var popupHtml = `
+                                <div class="modal" tabindex="-1" role="dialog" id="addToCartModal">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Item Added to Cart</h5>
+                                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>${productName} has been added to your cart.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="redirectToProducts()">Continue Shopping</button>
+                                                <a href="@Url.Action("Cart", "Home")" class="btn btn-primary">Checkout</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+            $('body').append(popupHtml);
+            $('#addToCartModal').modal('show');
+        }
+
+        function redirectToProducts() {
+            window.location.href = '@Url.Action("Products", "Home")';
+        }
+    </script>
 </body>
 </html>
 
@@ -140,4 +206,4 @@
             .Replace("‚Ä†", "†")
             .Replace("‚Äˇ", "ˇ");
     }
-}
+}  

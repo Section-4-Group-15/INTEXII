@@ -12,5 +12,4 @@ public partial class CartProduct
     public int product_Id { get; set; }
     public int quantity { get; set; }
     public decimal cost { get; set; }
-
 }

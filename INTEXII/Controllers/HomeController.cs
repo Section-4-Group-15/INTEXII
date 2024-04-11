@@ -204,7 +204,6 @@ namespace INTEXII.Controllers
 
             return View(model);
         }
-
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> AddToCart(int productId, int quantity)
@@ -236,12 +235,12 @@ namespace INTEXII.Controllers
                     }
 
                     await context.SaveChangesAsync();
+                    return Json(new { success = true, productName = product.Name });
                 }
             }
 
-            return RedirectToAction("Cart");
+            return Json(new { success = false });
         }
-
         [Authorize]
         public async Task<IActionResult> Cart()
         {
@@ -254,10 +253,30 @@ namespace INTEXII.Controllers
 
                     var cartItems = await context.CartProducts
                         .Where(cp => cp.user_Id == userId)
-                        /*.Include(cp => cp.Product)*/ // Use the navigation property here
                         .ToListAsync();
 
-                    return View(cartItems);
+                    // Retrieve the product names for each cart item
+                    var productIds = cartItems.Select(cp => cp.product_Id).ToList();
+                    var products = await context.Products
+                        .Where(p => productIds.Contains(p.product_ID))
+                        .ToListAsync();
+
+                    // Create a dictionary to map product IDs to product names
+                    var productNameDict = products.ToDictionary(p => p.product_ID, p => p.Name);
+
+                    // Create a new list to store the cart items with product names
+                    var cartItemsWithNames = new List<(CartProduct CartItem, string ProductName)>();
+
+                    // Assign the product name to each cart item
+                    foreach (var cartItem in cartItems)
+                    {
+                        if (productNameDict.TryGetValue(cartItem.product_Id, out var productName))
+                        {
+                            cartItemsWithNames.Add((cartItem, productName));
+                        }
+                    }
+
+                    return View(cartItemsWithNames);
                 }
 
                 return RedirectToAction("Index");
@@ -465,6 +484,10 @@ namespace INTEXII.Controllers
                 _logger.LogError(ex, "Error assigning role");
                 return RedirectToAction("Error"); // Redirect to the appropriate page
             }
+        }
+        public IActionResult Error()
+        {
+            return View();
         }
     }
 }
