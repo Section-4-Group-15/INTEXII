@@ -184,7 +184,7 @@ namespace INTEXII.Controllers
         {
             ViewBag.CartItemCount = GetCartItemCount();
 
-            var product = context.Products.FirstOrDefault(p => p.Product_ID == id);
+            var product = context.Products.FirstOrDefault(p => p.product_ID == id);
 
             if (product == null)
             {
@@ -242,7 +242,6 @@ namespace INTEXII.Controllers
             return RedirectToAction("Cart");
         }
 
-        // Cart View
         [Authorize]
         public async Task<IActionResult> Cart()
         {
@@ -269,13 +268,59 @@ namespace INTEXII.Controllers
                 return RedirectToAction("Error");
             }
         }
+        [Authorize]
+        public async Task<IActionResult> CheckoutForm()
+        {
+            try
+            {
+                if (User.Identity.IsAuthenticated)
+                {
+                    var userId = _userManager.GetUserId(User);
+                    var cartItems = await context.CartProducts
+                        .Where(cp => cp.user_Id == userId)
+                        .ToListAsync();
+
+                    var subtotal = cartItems.Sum(item => item.cost * item.quantity);
+                    ViewBag.Subtotal = subtotal.ToString("C");
+
+                    return View();
+                }
+
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting checkout form");
+                return RedirectToAction("Error");
+            }
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> SubmitOrder(string address)
+        {
+            try
+            {
+                // Logic to create an order record goes here
+                _logger.LogInformation($"Order submitted for address: {address}"); // DEBUG
+
+                // Implement order confirmation popup or redirect as needed
+                return RedirectToAction("OrderConfirmation");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error submitting order");
+                return RedirectToAction("Error");
+            }
+        }
+
 
         // Admin Controller
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminProducts()
         {
             ViewBag.CartItemCount = GetCartItemCount();
-            var products = await context.Products.OrderBy(p => p.Product_ID).ToListAsync();
+            var products = await context.Products.OrderBy(p => p.product_ID).ToListAsync();
             return View(products);
         }
 
@@ -287,9 +332,23 @@ namespace INTEXII.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    context.Update(updatedProduct);
-                    await context.SaveChangesAsync();
-                    return Json(new { success = true });
+                    // First, check if the product exists in the database
+                    var existingProduct = await context.Products
+                        .FirstOrDefaultAsync(p => p.product_ID == updatedProduct.product_ID);
+
+                    if (existingProduct != null)
+                    {
+                        // If the product exists, EF now tracks existingProduct, 
+                        // Copy the updated values onto the tracked entity
+                        context.Entry(existingProduct).CurrentValues.SetValues(updatedProduct);
+
+                        await context.SaveChangesAsync();
+                        return Json(new { success = true });
+                    }
+                    else
+                    {
+                        return Json(new { success = false, message = "Product not found" });
+                    }
                 }
                 return Json(new { success = false, message = "Invalid product data" });
             }
@@ -307,8 +366,8 @@ namespace INTEXII.Controllers
             try
             {
                 // Workaround for database-generated identity column, since we are using preexisting data
-                var maxProductId = await context.Products.MaxAsync(p => (int?)p.Product_ID) ?? 0;
-                newProduct.Product_ID = (int)(maxProductId + 1);
+                var maxProductId = await context.Products.MaxAsync(p => (int?)p.product_ID) ?? 0;
+                newProduct.product_ID = (int)(maxProductId + 1);
 
                 if (ModelState.IsValid)
                 {

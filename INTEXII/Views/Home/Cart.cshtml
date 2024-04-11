@@ -1,4 +1,8 @@
-﻿@model List<CartProduct>
+﻿@{
+    ViewData["Title"] = "Cart";
+}
+
+@model List<CartProduct>
 
 <h2>Shopping Cart</h2>
 
@@ -17,15 +21,24 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    @* <td>@item.Product.Name</td> *@
+                    @* Assume Product Name is a placeholder *@
                     <td>Product Name</td>
                     <td>@item.cost.ToString("C")</td>
                     <td>@item.quantity</td>
                     <td>@((item.cost * item.quantity).ToString("C"))</td>
                 </tr>
             }
+            <tr>
+                <td colspan="3" style="text-align:right"><strong>Subtotal:</strong></td>
+                <td><strong>@(Model.Sum(item => item.cost * item.quantity).ToString("C"))</strong></td>
+            </tr>
         </tbody>
     </table>
+    <div class="text-center mt-3">
+        <form asp-controller="Home" asp-action="CheckoutForm">
+            <button type="submit" class="btn btn-primary">Proceed to Checkout</button>
+        </form>
+    </div>
 }
 else
 {
