@@ -13,5 +13,4 @@ public partial class CartProduct
     public int quantity { get; set; }
     public decimal cost { get; set; }
 
-    public Product Product { get; set; }
 }

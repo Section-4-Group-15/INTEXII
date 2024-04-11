@@ -48,7 +48,7 @@
 
                 <!-- Purchase Options -->
                 <form asp-controller="Home" asp-action="AddToCart" method="post">
-                    <input type="hidden" name="productId" value="@Model.Products.FirstOrDefault()?.Product_Id" />
+                    <input type="hidden" name="productId" value="@Model.Products.FirstOrDefault()?.Product_ID" />
                     <input type="hidden" name="quantity" value="1" />
                     <button type="submit" class="btn btn-primary">Add to Cart</button>
                 </form>
