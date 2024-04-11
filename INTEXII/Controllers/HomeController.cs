@@ -7,6 +7,8 @@ using INTEXII.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http;
+using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime.Tensors;
 
 namespace INTEXII.Controllers
 {
@@ -18,12 +20,24 @@ namespace INTEXII.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
+        private readonly InferenceSession _session;
+
         public HomeController(ILogger<HomeController> logger, BrickwellContext con, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _logger = logger;
             _userManager = userManager;
             _roleManager = roleManager;
             context = con;
+
+            try
+            {
+                _session = new InferenceSession("fraud_model.onnx");
+                _logger.LogInformation("ONNX model loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error leading the ONNX model.");
+            }
         }
 
         private int GetCartItemCount()
