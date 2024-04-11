@@ -204,7 +204,6 @@ namespace INTEXII.Controllers
 
             return View(model);
         }
-
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> AddToCart(int productId, int quantity)
@@ -236,12 +235,12 @@ namespace INTEXII.Controllers
                     }
 
                     await context.SaveChangesAsync();
+                    return Json(new { success = true, productName = product.Name });
                 }
             }
 
-            return RedirectToAction("Cart");
+            return Json(new { success = false });
         }
-
         [Authorize]
         public async Task<IActionResult> Cart()
         {
