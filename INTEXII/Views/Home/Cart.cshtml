@@ -2,7 +2,7 @@
     ViewData["Title"] = "Cart";
 }
 
-@model List<CartProduct>
+@model List<(CartProduct CartItem, string ProductName)>
 
 <h2>Shopping Cart</h2>
 
@@ -21,16 +21,15 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    @* Assume Product Name is a placeholder *@
-                    <td>Product Name</td>
-                    <td>@item.cost.ToString("C")</td>
-                    <td>@item.quantity</td>
-                    <td>@((item.cost * item.quantity).ToString("C"))</td>
+                    <td>@item.ProductName</td>
+                    <td>@item.CartItem.cost.ToString("C")</td>
+                    <td>@item.CartItem.quantity</td>
+                    <td>@((item.CartItem.cost * item.CartItem.quantity).ToString("C"))</td>   
                 </tr>
             }
             <tr>
                 <td colspan="3" style="text-align:right"><strong>Subtotal:</strong></td>
-                <td><strong>@(Model.Sum(item => item.cost * item.quantity).ToString("C"))</strong></td>
+                <td><strong>@(Model.Sum(item => item.CartItem.cost * item.CartItem.quantity).ToString("C"))</strong></td>
             </tr>
         </tbody>
     </table>

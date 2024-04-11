@@ -172,15 +172,22 @@
                                 <div class="col-md-2 text-right">
                                     <div class="d-flex flex-column align-items-end">
                                         <h2 class="text-success">$@product.Price</h2>
-                                        <a href="#" class="btn btn-info mt-2" role="button" data-toggle="tooltip" data-placement="top" title="Add to Cart">
-                                            <img src="~/img/shopping-cart.png" alt="Add to Cart" class="img-fluid" style="max-height: 30px;" />
-                                        </a>
-                                        <a href="@Url.Action("IndProducts", new { id = product.product_ID })" class="btn btn-secondary mt-2" rproducttton">
+
+                                        <!-- Updated Add to Cart Button -->
+                                        <form asp-controller="Home" asp-action="AddToCart" method="post" class="mt-2">
+                                            <input type="hidden" name="productId" value="@product.product_ID" />
+                                            <input type="hidden" name="quantity" value="1" />
+                                            <button type="submit" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Add to Cart">
+                                                <img src="~/img/shopping-cart.png" alt="Add to Cart" class="img-fluid" style="max-height: 30px;" />
+                                            </button>
+                                        </form>
+
+                                        <a href="@Url.Action("IndProducts", new { id = product.product_ID })" class="btn btn-secondary mt-2">
                                             View Details
                                         </a>
-
                                     </div>
                                 </div>
+
                             </div>
                             <hr />
                         }
