@@ -1,8 +1,4 @@
-﻿@{
-    ViewData["Title"] = "Cart";
-}
-
-@model List<(CartProduct CartItem, string ProductName)>
+﻿@model List<(CartProduct CartItem, string ProductName)>
 
 <h2>Shopping Cart</h2>
 
@@ -15,6 +11,7 @@
                 <th>Price</th>
                 <th>Quantity</th>
                 <th>Total</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -23,8 +20,20 @@
                 <tr>
                     <td>@item.ProductName</td>
                     <td>@item.CartItem.cost.ToString("C")</td>
-                    <td>@item.CartItem.quantity</td>
-                    <td>@((item.CartItem.cost * item.CartItem.quantity).ToString("C"))</td>   
+                    <td>
+                        <form asp-controller="Home" asp-action="UpdateQuantity" method="post">
+                            <input type="hidden" name="productId" value="@item.CartItem.product_Id" />
+                            <input type="number" name="quantity" value="@item.CartItem.quantity" min="1" />
+                            <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                        </form>
+                    </td>
+                    <td>@((item.CartItem.cost * item.CartItem.quantity).ToString("C"))</td>
+                    <td>
+                        <form asp-controller="Home" asp-action="RemoveFromCart" method="post">
+                            <input type="hidden" name="productId" value="@item.CartItem.product_Id" />
+                            <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                        </form>
+                    </td>
                 </tr>
             }
             <tr>

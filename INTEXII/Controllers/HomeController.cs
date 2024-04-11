@@ -304,6 +304,44 @@ namespace INTEXII.Controllers
                 return RedirectToAction("Error");
             }
         }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> UpdateQuantity(int productId, int quantity)
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                var userId = _userManager.GetUserId(User);
+                var cartItem = await context.CartProducts.FirstOrDefaultAsync(cp => cp.user_Id == userId && cp.product_Id == productId);
+
+                if (cartItem != null)
+                {
+                    cartItem.quantity = quantity;
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            return RedirectToAction("Cart");
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> RemoveFromCart(int productId)
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                var userId = _userManager.GetUserId(User);
+                var cartItem = await context.CartProducts.FirstOrDefaultAsync(cp => cp.user_Id == userId && cp.product_Id == productId);
+
+                if (cartItem != null)
+                {
+                    context.CartProducts.Remove(cartItem);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            return RedirectToAction("Cart");
+        }
         [Authorize]
         public async Task<IActionResult> CheckoutForm()
         {
