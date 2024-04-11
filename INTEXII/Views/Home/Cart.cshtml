@@ -17,7 +17,8 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.Product.Name</td>
+                    @* <td>@item.Product.Name</td> *@
+                    <td>Product Name</td>
                     <td>@item.cost.ToString("C")</td>
                     <td>@item.quantity</td>
                     <td>@((item.cost * item.quantity).ToString("C"))</td>

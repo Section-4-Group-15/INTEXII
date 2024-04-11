@@ -7,13 +7,9 @@ namespace INTEXII.Models;
 
 public partial class Product
 {
-    public Product()
-    {
-        CartProducts = new HashSet<CartProduct>();
-    }
 
     [Key]
-    public int Product_Id { get; set; }
+    public int Product_ID { get; set; }
 
     public string Name { get; set; } = null!;
 
@@ -33,5 +29,4 @@ public partial class Product
     public string? Category_1 { get; set; }
     public string? Category_2 { get; set; }
 
-    public ICollection<CartProduct> CartProducts { get; set; }
 }

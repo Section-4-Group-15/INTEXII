@@ -198,7 +198,7 @@ namespace INTEXII.Controllers
         //}
         public IActionResult IndProducts(int id)
         {
-            var product = context.Products.FirstOrDefault(p => p.Product_Id == id);
+            var product = context.Products.FirstOrDefault(p => p.Product_ID == id);
 
             if (product == null)
             {
@@ -265,7 +265,7 @@ namespace INTEXII.Controllers
                     var userId = _userManager.GetUserId(User);
                     var cartItems = await context.CartProducts
                     .Where(cp => cp.user_Id == userId)
-                    .Include(cp => cp.Product) // Use the navigation property here
+                    /*.Include(cp => cp.Product)*/ // Use the navigation property here
                     .ToListAsync();
 
                     return View(cartItems);
@@ -284,7 +284,7 @@ namespace INTEXII.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminProducts()
         {
-            var products = await context.Products.OrderBy(p => p.Product_Id).ToListAsync();
+            var products = await context.Products.OrderBy(p => p.Product_ID).ToListAsync();
             return View(products);
         }
 
@@ -293,13 +293,21 @@ namespace INTEXII.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProduct(Product updatedProduct)
         {
-            if (ModelState.IsValid)
+            try
             {
-                context.Update(updatedProduct);
-                await context.SaveChangesAsync();
-                return Json(new { success = true });
+                if (ModelState.IsValid)
+                {
+                    context.Update(updatedProduct);
+                    await context.SaveChangesAsync();
+                    return Json(new { success = true });
+                }
+                return Json(new { success = false, message = "Invalid product data" });
             }
-            return Json(new { success = false, message = "Invalid product data" });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating product");
+                return Json(new { success = false, message = "Error updating product" });
+            }
         }
         [HttpPost]
         [Authorize(Roles = "Admin")]
@@ -308,8 +316,8 @@ namespace INTEXII.Controllers
             try {
 
                 // Workaround for database-generated identity column, since we are using preexisting data
-                var maxProductId = await context.Products.MaxAsync(p => (int?)p.Product_Id) ?? 0;
-                newProduct.Product_Id = (int)(maxProductId + 1);
+                var maxProductId = await context.Products.MaxAsync(p => (int?)p.Product_ID) ?? 0;
+                newProduct.Product_ID = (int)(maxProductId + 1);
 
                 if (ModelState.IsValid)
                 {
