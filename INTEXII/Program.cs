@@ -92,12 +92,10 @@ app.UseAuthorization();
 
 // Define custom routes
 app.MapControllerRoute(
-    name: "products",
-    pattern: "products/{action}/{id?}",
-    defaults: new { controller = "Products", action = "Index" }
-);
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapControllerRoute("pages", "{action}", new { Controller = "Home", action = "Index" });
+//app.MapControllerRoute("pages", "{action}", new { Controller = "Home", action = "Index" });
 
 
 app.MapRazorPages();
