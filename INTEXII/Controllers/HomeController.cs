@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using INTEXII.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http;
+using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime.Tensors;
 
 namespace INTEXII.Controllers
 {
@@ -17,12 +20,24 @@ namespace INTEXII.Controllers
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
+        private readonly InferenceSession _session;
+
         public HomeController(ILogger<HomeController> logger, BrickwellContext con, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _logger = logger;
             _userManager = userManager;
             _roleManager = roleManager;
             context = con;
+
+            try
+            {
+                _session = new InferenceSession("fraud_model.onnx");
+                _logger.LogInformation("ONNX model loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error leading the ONNX model.");
+            }
         }
 
         private int GetCartItemCount()
@@ -549,5 +564,207 @@ namespace INTEXII.Controllers
 
             return RedirectToAction("Users");
         }
+
+        [HttpGet]
+        public IActionResult AddOrderAdmin()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddOrderAdmin(Order newOrder)
+        {
+            // Dictionary mapping the numeric prediction to an animal type
+            var fraud_type_dict = new Dictionary<int, string>
+            {
+                {0, "Good Purchase" },
+                {1, "Fraudulent Purchase"},
+            };
+
+            //Calculate Days since January 1, 2022
+            var january1_2022 = new DateOnly(2022, 1, 1);
+            var recordDate = newOrder.Date.HasValue ? new DateTime(newOrder.Date.Value.Year, newOrder.Date.Value.Month, newOrder.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+            var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+
+            try
+            {
+                var input = new List<float>
+                    {
+                        (float)newOrder.Customer_Id,
+                        (float)newOrder.Time,
+                        // fix amount if its null
+                        (float)(newOrder.Amount ?? 0),
+
+                        //fix date
+                        daysSinceJan2022,
+
+                        // Check the dummy coded data
+                        newOrder.Day_Of_Week == "Mon" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Sat" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Sun" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Thu" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Tue" ? 1 : 0,
+                        newOrder.Day_Of_Week == "Wed" ? 1 : 0,
+
+                        newOrder.Entry_Mode == "Pin" ? 1 : 0,
+                        newOrder.Entry_Mode == "Tap" ? 1 : 0,
+
+                        newOrder.Type_Of_Transaction == "Online" ? 1 : 0,
+                        newOrder.Type_Of_Transaction == "POS" ? 1 : 0,
+
+                        newOrder.Country_Of_Transaction == "India" ? 1 : 0,
+                        newOrder.Country_Of_Transaction == "Russia" ? 1 : 0,
+                        newOrder.Country_Of_Transaction == "USA" ? 1 : 0,
+                        newOrder.Country_Of_Transaction == "United Kingdom" ? 1 : 0,
+
+                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "India" ? 1 : 0,
+                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "Russia" ? 1 : 0,
+                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "USA" ? 1 : 0,
+                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "United Kingdom" ? 1 : 0,
+
+                        newOrder.Bank == "HSBC" ? 1 : 0,
+                        newOrder.Bank == "Halifax" ? 1 : 0,
+                        newOrder.Bank == "Lloyds" ? 1 : 0,
+                        newOrder.Bank == "Metro" ? 1 : 0,
+                        newOrder.Bank == "Monzo" ? 1 : 0,
+                        newOrder.Bank == "RBS" ? 1 : 0,
+
+                        newOrder.Type_Of_Card == "Visa" ? 1 : 0,
+
+                        (float)newOrder.Fraud
+                    };
+
+                var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
+
+                var inputs = new List<NamedOnnxValue>
+                {
+                    NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
+                };
+
+                using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form (i.e. class_type 1-7)
+                {
+                    var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
+                    if (prediction != null && prediction.Length > 0)
+                    {
+                        // Use the prediction to get the animal type from the dictionary
+                        var fraudType = fraud_type_dict.GetValueOrDefault((int)prediction[0], "Unknown");
+                        ViewBag.Prediction = fraudType;
+
+                        // Workaround for database-generated identity column, since we are using preexisting data
+                        var maxProductId = await context.Orders.MaxAsync(o => (int?)o.Transaction_Id) ?? 0;
+                        newOrder.Transaction_Id = (int)(maxProductId + 1);
+
+                        if (ModelState.IsValid)
+                        {
+                            context.Orders.Add(newOrder);
+                            await context.SaveChangesAsync();
+                            // return Json(new { success = true });
+                        }
+                        // return Json(new { success = false, message = "Invalid order data" });
+                    }
+                    else
+                    {
+                        ViewBag.Prediction = "Error: Unable to make a prediction.";
+                    }
+                }
+
+                _logger.LogInformation("Prediction executed successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error during prediction: {ex.Message}");
+                ViewBag.Prediction = "Error during prediction.";
+            }
+
+            return View();
+        }
+
+
+        //public IActionResult Predict()
+        //{
+        //    var records = context.Orders
+        //        .OrderByDescending(o => o.Date)
+        //        .Take(20)
+        //        .ToList();
+        //    var predictions = new List<OrderPrediction>();
+
+        //    var fraud_type_dict = new Dictionary<int, string>
+        //    {
+        //        {0, "no" },
+        //        {1, "yes"},
+        //    };
+
+        //    foreach (var record in records)
+        //    {
+        //        //Calculate Days since January 1, 2022
+        //        var january1_2022 = new DateOnly(2022, 1, 1);
+        //        var recordDate = record.Date.HasValue ? new DateTime(record.Date.Value.Year, record.Date.Value.Month, record.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+        //        var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+
+        //        var input = new List<float>
+        //            {
+        //                (float)record.Customer_Id,
+        //                (float)record.Time,
+        //                // fix amount if its null
+        //                (float)(record.Amount ?? 0),
+
+        //                //fix date
+        //                daysSinceJan2022,
+
+        //                // Check the dummy coded data
+        //                record.Day_Of_Week == "Mon" ? 1 : 0,
+        //                record.Day_Of_Week == "Sat" ? 1 : 0,
+        //                record.Day_Of_Week == "Sun" ? 1 : 0,
+        //                record.Day_Of_Week == "Thu" ? 1 : 0,
+        //                record.Day_Of_Week == "Tue" ? 1 : 0,
+        //                record.Day_Of_Week == "Wed" ? 1 : 0,
+
+        //                record.Entry_Mode == "Pin" ? 1 : 0,
+        //                record.Entry_Mode == "Tap" ? 1 : 0,
+
+        //                record.Type_Of_Transaction == "Online" ? 1 : 0,
+        //                record.Type_Of_Transaction == "POS" ? 1 : 0,
+
+        //                record.Country_Of_Transaction == "India" ? 1 : 0,
+        //                record.Country_Of_Transaction == "Russia" ? 1 : 0,
+        //                record.Country_Of_Transaction == "USA" ? 1 : 0,
+        //                record.Country_Of_Transaction == "United Kingdom" ? 1 : 0,
+
+        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "India" ? 1 : 0,
+        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "Russia" ? 1 : 0,
+        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "USA" ? 1 : 0,
+        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "United Kingdom" ? 1 : 0,
+
+        //                record.Bank == "HSBC" ? 1 : 0,
+        //                record.Bank == "Halifax" ? 1 : 0,
+        //                record.Bank == "Lloyds" ? 1 : 0,
+        //                record.Bank == "Metro" ? 1 : 0,
+        //                record.Bank == "Monzo" ? 1 : 0,
+        //                record.Bank == "RBS" ? 1 : 0,
+
+        //                record.Type_Of_Card == "Visa" ? 1 : 0
+        //            };
+        //        var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
+
+        //        var inputs = new List<NamedOnnxValue>
+        //            {
+        //                NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
+        //            };
+
+        //        string predictionResult;
+
+
+        //        using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form
+        //        {
+        //            var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
+        //            predictionResult = prediction != null && prediction.Length > 0 ? fraud_type_dict.GetValueOrDefault((int)prediction[0], "Unknown") : "Error in prediction";
+        //        }
+
+        //        predictions.Add(new OrderPrediction { Orders = record, Prediction = predictionResult }); // Add the prediction to the db
+        //    }
+
+        //    return View(predictions);
+        //}
     }
 }

@@ -174,12 +174,10 @@
                                         <h2 class="text-success">$@product.Price</h2>
 
                                         <!-- Updated Add to Cart Button -->
-                                        <form asp-controller="Home" asp-action="AddToCart" method="post" class="mt-2">
-                                            <input type="hidden" name="productId" value="@product.product_ID" />
+                                        <form id="addToCartForm" asp-controller="Home" asp-action="AddToCart" method="post">
+                                            <input type="hidden" name="productId" value="@Model.Products.FirstOrDefault()?.product_ID" />
                                             <input type="hidden" name="quantity" value="1" />
-                                            <button type="submit" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Add to Cart">
-                                                <img src="~/img/shopping-cart.png" alt="Add to Cart" class="img-fluid" style="max-height: 30px;" />
-                                            </button>
+                                            <button type="submit" class="btn btn-primary" id="addToCartButton">Add to Cart</button>
                                         </form>
 
                                         <a href="@Url.Action("IndProducts", new { id = product.product_ID })" class="btn btn-secondary mt-2">
@@ -231,29 +229,7 @@
                                 </div>
                             </div>
                         </div>
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function () {
-                                const form = document.getElementById('itemsPerPageForm');
-                                form.addEventListener('click', function (event) {
-                                    if (event.target.type === 'submit') {
-                                        event.preventDefault(); // Prevent the default form submission
-
-                                        const categories = Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(el => el.value);
-                                        const colors = Array.from(document.querySelectorAll('input[name="colors"]:checked')).map(el => el.value);
-                                        const selectedPageSize = event.target.value;
-
-                                        // Build the URL with selected filter options and page size
-                                        const url = new URL(form.action, window.location.origin);
-                                        categories.forEach(category => url.searchParams.append('categories', category));
-                                        colors.forEach(color => url.searchParams.append('colors', color));
-                                        url.searchParams.append('pageSize', selectedPageSize);
-
-                                        // Redirect to the updated URL
-                                        window.location.href = url.toString();
-                                    }
-                                });
-                            });
-                        </script>
+                       
 
                     }
                     else
@@ -264,5 +240,87 @@
             </div>
         </div>
     </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('itemsPerPageForm');
+            form.addEventListener('click', function (event) {
+                if (event.target.type === 'submit') {
+                    event.preventDefault(); // Prevent the default form submission
+
+                    const categories = Array.from(document.querySelectorAll('input[name="categories"]:checked')).map(el => el.value);
+                    const colors = Array.from(document.querySelectorAll('input[name="colors"]:checked')).map(el => el.value);
+                    const selectedPageSize = event.target.value;
+
+                    // Build the URL with selected filter options and page size
+                    const url = new URL(form.action, window.location.origin);
+                    categories.forEach(category => url.searchParams.append('categories', category));
+                    colors.forEach(color => url.searchParams.append('colors', color));
+                    url.searchParams.append('pageSize', selectedPageSize);
+
+                    // Redirect to the updated URL
+                    window.location.href = url.toString();
+                }
+            });
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#addToCartForm').submit(function (event) {
+                event.preventDefault(); // Prevent the default form submission
+
+                $.ajax({
+                    type: 'POST',
+                    url: '@Url.Action("AddToCart", "Home")',
+                    data: $(this).serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            showPopup(response.productName);
+                        } else {
+                            // Redirect to the login page if there's an error
+                            window.location.href = '@Url.Content("~/Identity/Account/Login")';
+                        }
+                    },
+                    error: function () {
+                        // Redirect to the login page if there's an error
+                        window.location.href = '@Url.Content("~/Identity/Account/Login")';
+                    }
+                });
+            });
+        });
+
+
+        function showPopup(productName) {
+            var popupHtml = `
+                                        <div class="modal" tabindex="-1" role="dialog" id="addToCartModal">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Item Added to Cart</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>${productName} has been added to your cart.</p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="redirectToProducts()">Continue Shopping</button>
+                                                        <a href="@Url.Action("Cart", "Home")" class="btn btn-primary">Checkout</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+
+            $('body').append(popupHtml);
+            $('#addToCartModal').modal('show');
+        }
+
+        function redirectToProducts() {
+            window.location.href = '@Url.Action("Products", "Home")';
+        }
+    </script>
 </body>
 </html> 
