@@ -198,7 +198,7 @@ namespace INTEXII.Controllers
         //}
         public IActionResult IndProducts(int id)
         {
-            var product = context.Products.FirstOrDefault(p => p.Product_ID == id);
+            var product = context.Products.FirstOrDefault(p => p.product_ID == id);
 
             if (product == null)
             {
@@ -284,7 +284,7 @@ namespace INTEXII.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminProducts()
         {
-            var products = await context.Products.OrderBy(p => p.Product_ID).ToListAsync();
+            var products = await context.Products.OrderBy(p => p.product_ID).ToListAsync();
             return View(products);
         }
 
@@ -297,9 +297,23 @@ namespace INTEXII.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    context.Update(updatedProduct);
-                    await context.SaveChangesAsync();
-                    return Json(new { success = true });
+                    // First, check if the product exists in the database
+                    var existingProduct = await context.Products
+                        .FirstOrDefaultAsync(p => p.product_ID == updatedProduct.product_ID);
+
+                    if (existingProduct != null)
+                    {
+                        // If the product exists, EF now tracks existingProduct, 
+                        // Copy the updated values onto the tracked entity
+                        context.Entry(existingProduct).CurrentValues.SetValues(updatedProduct);
+
+                        await context.SaveChangesAsync();
+                        return Json(new { success = true });
+                    }
+                    else
+                    {
+                        return Json(new { success = false, message = "Product not found" });
+                    }
                 }
                 return Json(new { success = false, message = "Invalid product data" });
             }
@@ -309,6 +323,7 @@ namespace INTEXII.Controllers
                 return Json(new { success = false, message = "Error updating product" });
             }
         }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddProduct(Product newProduct)
@@ -316,8 +331,8 @@ namespace INTEXII.Controllers
             try {
 
                 // Workaround for database-generated identity column, since we are using preexisting data
-                var maxProductId = await context.Products.MaxAsync(p => (int?)p.Product_ID) ?? 0;
-                newProduct.Product_ID = (int)(maxProductId + 1);
+                var maxProductId = await context.Products.MaxAsync(p => (int?)p.product_ID) ?? 0;
+                newProduct.product_ID = (int)(maxProductId + 1);
 
                 if (ModelState.IsValid)
                 {

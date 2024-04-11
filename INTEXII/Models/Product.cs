@@ -9,7 +9,7 @@ public partial class Product
 {
 
     [Key]
-    public int Product_ID { get; set; }
+    public int product_ID { get; set; }
 
     public string Name { get; set; } = null!;
 
