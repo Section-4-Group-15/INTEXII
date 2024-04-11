@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using INTEXII.Models.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.ML.OnnxRuntime;
+using Microsoft.ML.OnnxRuntime.Tensors;
 
 namespace INTEXII.Controllers
 {
@@ -16,11 +18,23 @@ namespace INTEXII.Controllers
 
         private readonly UserManager<IdentityUser> _userManager;
 
+        private readonly InferenceSession _session;
+
         public HomeController(ILogger<HomeController> logger, BrickwellContext con, UserManager<IdentityUser> userManager)
         {
             _logger = logger;
             _userManager = userManager;
             context = con;
+
+            try
+            {
+                _session = new InferenceSession("C:\\Users\\nhaskett\\Source\\Repos\\INTEXII\\INTEXII\\decision_tree_model.onnx");
+                _logger.LogInformation("ONNX model loaded successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error leading the ONNX model.");
+            }
         }
 
         private int GetCartItemCount()
@@ -365,7 +379,7 @@ namespace INTEXII.Controllers
             {
                 // Order by Date descending, then by Time descending to get most recent orders first
                 var ordersQuery = context.Orders
-                                         .OrderByDescending(o => o.Date)
+                                         .OrderByDescending(o => o.Transaction_Id)
                                          .ThenByDescending(o => o.Time)
                                          .AsQueryable();
 
@@ -437,6 +451,94 @@ namespace INTEXII.Controllers
                 _logger.LogError(ex, "Error adding order");
                 return Json(new { success = false, message = "Error adding order" });
             }
+        }
+
+        [HttpPost]
+        public IActionResult Predict()
+        {
+            var records = context.Orders
+                .OrderByDescending(o => o.Date)
+                .Take(20)
+                .ToList();
+            var predictions = new List<OrderPrediction>();
+
+            var fraud_type_dict = new Dictionary<int, string>
+            {
+                {0, "no" },
+                {1, "yes"},
+            };
+
+            foreach (var record in records)
+            {
+                //Calculate Days since January 1, 2022
+                var january1_2022 = new DateOnly(2022, 1, 1);
+                var recordDate = record.Date.HasValue ? new DateTime(record.Date.Value.Year, record.Date.Value.Month, record.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+                var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+
+                var input = new List<float>
+                    {
+                        (float)record.Customer_Id,
+                        (float)record.Time,
+                        // fix amount if its null
+                        (float)(record.Amount ?? 0),
+
+                        //fix date
+                        daysSinceJan2022,
+
+                        // Check the dummy coded data
+                        record.Day_Of_Week == "Mon" ? 1 : 0,
+                        record.Day_Of_Week == "Sat" ? 1 : 0,
+                        record.Day_Of_Week == "Sun" ? 1 : 0,
+                        record.Day_Of_Week == "Thu" ? 1 : 0,
+                        record.Day_Of_Week == "Tue" ? 1 : 0,
+                        record.Day_Of_Week == "Wed" ? 1 : 0,
+
+                        record.Entry_Mode == "Pin" ? 1 : 0,
+                        record.Entry_Mode == "Tap" ? 1 : 0,
+
+                        record.Type_Of_Transaction == "Online" ? 1 : 0,
+                        record.Type_Of_Transaction == "POS" ? 1 : 0,
+
+                        record.Country_Of_Transaction == "India" ? 1 : 0,
+                        record.Country_Of_Transaction == "Russia" ? 1 : 0,
+                        record.Country_Of_Transaction == "USA" ? 1 : 0,
+                        record.Country_Of_Transaction == "UnitedKingdom" ? 1 : 0,
+                    }
+            }
+
+            try
+            {
+                var input = new List<float> { };
+                var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
+
+                var inputs = new List<NamedOnnxValue>
+                {
+                    NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
+                };
+
+                using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form
+                {
+                    var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
+                    if (prediction != null && prediction.Length > 0)
+                    {
+                        var fraudType = fraud_type_dict.GetValueOrDefault((int)prediction[0], "Unknown");
+                        ViewBag.Prediction = fraudType;
+                    }
+                    else
+                    {
+                        ViewBag.Prediction = "Error: Unable to make a prediction.";
+                    }
+                }
+
+                _logger.LogInformation("Prediction executed succesfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error during prediction: {ex.Message}");
+                ViewBag.Prediction = "Error during prediction";
+            }
+
+            return View("AddOrderAdmin");
         }
     }
 }

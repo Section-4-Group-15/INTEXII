@@ -61,4 +61,11 @@
     <button type="submit">Submit</button>
 </form>
 
+<div class="text-center" id="predictionResult">
+    @if (ViewBag.Prediction != null)
+    {
+        <h2>Prediction: @ViewBag.Prediction</h2>
+    }
+</div>
+
 <!--655286	16107	2023-12-31	Sun	23	158	ATM	United Kingdom	United Kingdom	Halifax	Visa	False-->
