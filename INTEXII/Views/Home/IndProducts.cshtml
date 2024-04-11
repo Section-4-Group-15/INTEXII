@@ -28,9 +28,20 @@
         .product-info {
             margin-top: 20px;
         }
+
+        .back-button {
+            text-align: left;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
+    <header>
+        <div class="back-button">
+            <a asp-controller="Home" asp-action="Products" class="btn btn-primary">Back</a>
+        </div>
+    </header>
+
     <div class="container">
         <h1 class="text-center">@ReplaceSpecialCharacters(Model.Products.FirstOrDefault()?.Name)</h1>
 
@@ -117,6 +128,7 @@
 </body>
 </html>
 
+
 @functions {
     public string ReplaceSpecialCharacters(string input)
     {
@@ -140,4 +152,4 @@
             .Replace("‚Ä†", "†")
             .Replace("‚Äˇ", "ˇ");
     }
-}
+} 
