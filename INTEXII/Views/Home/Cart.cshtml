@@ -17,13 +17,17 @@
             @foreach (var item in Model)
             {
                 <tr>
-                    @* <td>@item.Product.Name</td> *@
+                    @* Assume Product Name is a placeholder *@
                     <td>Product Name</td>
                     <td>@item.cost.ToString("C")</td>
                     <td>@item.quantity</td>
                     <td>@((item.cost * item.quantity).ToString("C"))</td>
                 </tr>
             }
+            <tr>
+                <td colspan="3" style="text-align:right"><strong>Subtotal:</strong></td>
+                <td><strong>@(Model.Sum(item => item.cost * item.quantity).ToString("C"))</strong></td>
+            </tr>
         </tbody>
     </table>
 }
