@@ -28,7 +28,7 @@ namespace INTEXII.Controllers
 
             try
             {
-                _session = new InferenceSession("C:\\Users\\nhaskett\\Source\\Repos\\INTEXII\\INTEXII\\fraud_model.onnx");
+                _session = new InferenceSession("C:\\Users\\maurineiko\\source\\repos\\INTEXII\\INTEXII\\fraud_model.onnx");
                 _logger.LogInformation("ONNX model loaded successfully");
             }
             catch (Exception ex)
@@ -487,7 +487,9 @@ namespace INTEXII.Controllers
                         newOrder.Bank == "Monzo" ? 1 : 0,
                         newOrder.Bank == "RBS" ? 1 : 0,
 
-                        newOrder.Type_Of_Card == "Visa" ? 1 : 0
+                        newOrder.Type_Of_Card == "Visa" ? 1 : 0,
+
+                        (float)newOrder.Fraud
                     };
 
                 var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
@@ -503,8 +505,8 @@ namespace INTEXII.Controllers
                     if (prediction != null && prediction.Length > 0)
                     {
                         // Use the prediction to get the animal type from the dictionary
-                        var animalType = fraud_type_dict.GetValueOrDefault((int)prediction[0], "Unknown");
-                        ViewBag.Prediction = animalType;
+                        var fraudType = fraud_type_dict.GetValueOrDefault((int)prediction[0], "Unknown");
+                        ViewBag.Prediction = fraudType;
 
                         // Workaround for database-generated identity column, since we are using preexisting data
                         var maxProductId = await context.Orders.MaxAsync(o => (int?)o.Transaction_Id) ?? 0;
@@ -514,9 +516,9 @@ namespace INTEXII.Controllers
                         {
                             context.Orders.Add(newOrder);
                             await context.SaveChangesAsync();
-                            return Json(new { success = true });
+                            // return Json(new { success = true });
                         }
-                        return Json(new { success = false, message = "Invalid order data" });
+                        // return Json(new { success = false, message = "Invalid order data" });
                     }
                     else
                     {
