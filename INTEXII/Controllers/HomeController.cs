@@ -23,6 +23,18 @@ namespace INTEXII.Controllers
             context = con;
         }
 
+        private int GetCartItemCount()
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                var userId = _userManager.GetUserId(User);
+                var cartItems = context.CartProducts.Where(cp => cp.user_Id == userId);
+                return cartItems.Sum(cp => cp.quantity);
+            }
+
+            return 0;
+        }
+
         public IActionResult Index()
         {
             // User is authenticated, but no recommendations in table, that's why nothing is showing up. 
@@ -50,27 +62,30 @@ namespace INTEXII.Controllers
             // Pass the recommendations to the view
             ViewData["Recommendations"] = recommendations;
 
+            // Calculate and pass the cart item count to the view
+            ViewBag.CartItemCount = GetCartItemCount();
+
             return View();
         }
 
-
-
-
-
         public IActionResult About()
         {
+            ViewBag.CartItemCount = GetCartItemCount();
             return View();
         }
 
         public IActionResult Contact()
         {
+            ViewBag.CartItemCount = GetCartItemCount();
             return View();
         }
 
         public IActionResult Privacy()
         {
+            ViewBag.CartItemCount = GetCartItemCount();
             return View();
         }
+
         [HttpGet]
         public IActionResult CreateCookie()
         {
@@ -91,92 +106,65 @@ namespace INTEXII.Controllers
 
         public IActionResult Products(int pageNum = 1, List<string> categories = null, List<string> colors = null, int pageSize = 5)
         {
+            // Calculate and pass the cart item count to the view
+            ViewBag.CartItemCount = GetCartItemCount();
+
             // Ensure pageNum is at least 1 to avoid negative offset
             pageNum = Math.Max(1, pageNum);
 
             // Fetch distinct categories from Category_1
-
             var categories1 = context.Products
-
-            .Where(p => !string.IsNullOrEmpty(p.Category_1))
-
-            .Select(p => p.Category_1)
-
-            .Distinct()
-
-            .ToList();
+                .Where(p => !string.IsNullOrEmpty(p.Category_1))
+                .Select(p => p.Category_1)
+                .Distinct()
+                .ToList();
 
             // Fetch distinct categories from Category_2
-
             var categories2 = context.Products
-
-            .Where(p => !string.IsNullOrEmpty(p.Category_2))
-
-            .Select(p => p.Category_2)
-
-            .Distinct()
-
-            .ToList();
+                .Where(p => !string.IsNullOrEmpty(p.Category_2))
+                .Select(p => p.Category_2)
+                .Distinct()
+                .ToList();
 
             // Combine both category lists and remove duplicates
-
             var allCategories = categories1.Concat(categories2).Distinct().OrderBy(c => c).ToList();
 
             // Pass all categories to the view
-
             ViewData["Model"] = allCategories;
 
             // Fetch distinct colors from Primary_Color
-
             var allColors = context.Products
-
-            .Where(p => !string.IsNullOrEmpty(p.Primary_Color))
-
-            .Select(p => p.Primary_Color)
-
-            .Distinct()
-
-            .OrderBy(c => c)
-
-            .ToList();
+                .Where(p => !string.IsNullOrEmpty(p.Primary_Color))
+                .Select(p => p.Primary_Color)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList();
 
             // Pass all colors to the view
-
             ViewData["Colors"] = allColors;
 
             // Start with the base query
-
             IQueryable<Product> query = context.Products.OrderBy(x => x.Name);
 
             if (categories != null && categories.Any())
-
             {
-
                 // Filter products based on selected categories
-
                 query = query.Where(p => categories.Contains(p.Category_1) || categories.Contains(p.Category_2)).OrderBy(x => x.Name);
-
             }
 
             if (colors != null && colors.Any())
-
             {
-
                 // Filter products based on selected colors (AND logic with categories)
-
                 query = query.Where(p => colors.Contains(p.Primary_Color) &&
-
                 (categories == null || !categories.Any() ||
-
                 categories.Contains(p.Category_1) || categories.Contains(p.Category_2))).OrderBy(x => x.Name);
-
             }
 
             var model = new ProjectsListViewModel
             {
                 Products = query.Skip((pageNum - 1) * pageSize)
-           .Take(pageSize)
-           .ToList(),
+                    .Take(pageSize)
+                    .ToList(),
                 PaginationInfo = new PaginationInfo
                 {
                     CurrentPage = pageNum,
@@ -192,12 +180,10 @@ namespace INTEXII.Controllers
             return View(model);
         }
 
-        //public IActionResult Error()
-        //{
-        //    return View();
-        //}
         public IActionResult IndProducts(int id)
         {
+            ViewBag.CartItemCount = GetCartItemCount();
+
             var product = context.Products.FirstOrDefault(p => p.Product_ID == id);
 
             if (product == null)
@@ -216,9 +202,9 @@ namespace INTEXII.Controllers
                 ProductRecs = productRecs
             };
 
-
             return View(model);
         }
+
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> AddToCart(int productId, int quantity)
@@ -255,39 +241,43 @@ namespace INTEXII.Controllers
 
             return RedirectToAction("Cart");
         }
+
         // Cart View
         [Authorize]
         public async Task<IActionResult> Cart()
         {
-            try { 
+            try
+            {
                 if (User.Identity.IsAuthenticated)
                 {
                     var userId = _userManager.GetUserId(User);
+                    ViewBag.CartItemCount = GetCartItemCount();
+
                     var cartItems = await context.CartProducts
-                    .Where(cp => cp.user_Id == userId)
-                    /*.Include(cp => cp.Product)*/ // Use the navigation property here
-                    .ToListAsync();
+                        .Where(cp => cp.user_Id == userId)
+                        /*.Include(cp => cp.Product)*/ // Use the navigation property here
+                        .ToListAsync();
 
                     return View(cartItems);
                 }
 
                 return RedirectToAction("Index");
-                } 
+            }
             catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error getting cart");
-                    return RedirectToAction("Error");
-                }
+            {
+                _logger.LogError(ex, "Error getting cart");
+                return RedirectToAction("Error");
+            }
         }
 
         // Admin Controller
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminProducts()
         {
+            ViewBag.CartItemCount = GetCartItemCount();
             var products = await context.Products.OrderBy(p => p.Product_ID).ToListAsync();
             return View(products);
         }
-
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
@@ -309,12 +299,13 @@ namespace INTEXII.Controllers
                 return Json(new { success = false, message = "Error updating product" });
             }
         }
+
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AddProduct(Product newProduct)
         {
-            try {
-
+            try
+            {
                 // Workaround for database-generated identity column, since we are using preexisting data
                 var maxProductId = await context.Products.MaxAsync(p => (int?)p.Product_ID) ?? 0;
                 newProduct.Product_ID = (int)(maxProductId + 1);
@@ -326,19 +317,20 @@ namespace INTEXII.Controllers
                     return Json(new { success = true });
                 }
                 return Json(new { success = false, message = "Invalid product data" });
-                } 
+            }
             catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error adding product");
-                    return Json(new { success = false, message = "Error adding product" });
-                }
+            {
+                _logger.LogError(ex, "Error adding product");
+                return Json(new { success = false, message = "Error adding product" });
+            }
         }
 
         [HttpPost]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteProduct(int Product_Id)
         {
-            try { 
+            try
+            {
                 var product = await context.Products.FindAsync(Product_Id);
                 if (product != null)
                 {
@@ -347,7 +339,7 @@ namespace INTEXII.Controllers
                     return Json(new { success = true });
                 }
                 return Json(new { success = false, message = "Product not found" });
-                } 
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting product");
@@ -358,11 +350,15 @@ namespace INTEXII.Controllers
         [Authorize(Roles = "Admin")]
         public IActionResult AdminUsers()
         {
+            ViewBag.CartItemCount = GetCartItemCount();
             return View();
         }
+
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminOrders(int page = 1)
         {
+            ViewBag.CartItemCount = GetCartItemCount();
+
             int pageSize = 100; // Set page size
 
             try
@@ -391,10 +387,11 @@ namespace INTEXII.Controllers
             }
         }
 
-
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AssignRole(string userId)
         {
+            ViewBag.CartItemCount = GetCartItemCount();
+
             try
             {
                 var user = await _userManager.FindByIdAsync(userId);
@@ -403,12 +400,12 @@ namespace INTEXII.Controllers
                     await _userManager.AddToRoleAsync(user, "Admin");
                 }
                 return RedirectToAction("Index"); // Redirect to the appropriate page
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "Error assigning role");
                 return RedirectToAction("Error"); // Redirect to the appropriate page
             }
         }
     }
-
 }

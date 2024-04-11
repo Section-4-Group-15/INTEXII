@@ -29,7 +29,18 @@
     <link href="~/ZenBlog/assets/css/main.css" rel="stylesheet">
     <link href="~/css/site.css" rel="stylesheet">
 
-
+    <style>
+        .cart-count {
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+            position: absolute;
+            top: -10px;
+            right: -10px;
+        }
+    </style>
 </head>
 <body>
     <header id="header" class="header d-flex align-items-center fixed-top">
@@ -53,9 +64,7 @@
             </nav>
 
             <div class="position-relative">
-                <a asp-controller="Home" asp-action="Cart" class="mx-2 cart-icon"><span class="bi-cart"></span></a>
-
-                <a href="#" class="mx-2 js-search-open"><span class="bi-search"></span></a>
+                <a href="#" class="js-search-open"><span class="bi-search"></span></a>
                 <i class="bi bi-list mobile-nav-toggle"></i>
 
                 <!-- ======= Search Form ======= -->
@@ -66,13 +75,20 @@
                         <button class="btn js-search-close"><span class="bi-x"></span></button>
                     </form>
                 </div><!-- End Search Form -->
-                
+
+                <a asp-controller="Home" asp-action="Cart" class="mx-2 cart-icon">
+                    <span class="bi-cart"></span>
+                    @if (ViewBag.CartItemCount > 0)
+                    {
+                        <span class="cart-count">@ViewBag.CartItemCount</span>
+                    }
+                </a>
             </div>
 
         </div>
 
     </header><!-- End Header -->
-    
+
     <div class="container">
         <main role="main" class="pb-3">
             <div class="container content-below-nav">
@@ -103,7 +119,7 @@
                             <li><a asp-controller="Home" asp-action="About"><i class="bi bi-chevron-right"></i> About</a></li>
                             <li><a asp-controller="Home" asp-action="Contact"><i class="bi bi-chevron-right"></i> Contact</a></li>
                         </ul>
-                    </div>       
+                    </div>
                 </div>
             </div>
         </div>
@@ -140,7 +156,7 @@
 
             </div>
         </div>
-        
+
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -161,7 +177,6 @@
 
     <!-- AJAX -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
 
 </body>
 </html>
