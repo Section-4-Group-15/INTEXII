@@ -11,6 +11,8 @@
     int totalPages = (int)Math.Ceiling((double)totalOrders / pageSize);
 }
 
+<a asp-controller="Home" asp-action="AddOrderAdmin">Add Order</a>
+
 <body>
     <main id="main">
         <h1>Order Management</h1>
@@ -25,6 +27,7 @@
                         <th>Date</th>
                         <th>Day of Week</th>
                         <th>Time</th>
+                        <th>Entry Mode</th>
                         <th>Amount</th>
                         <th>Type of Transaction</th>
                         <th>Country of Transaction</th>
@@ -43,6 +46,7 @@
                             <td>@order.Date?.ToString("yyyy-MM-dd")</td>
                             <td>@order.Day_Of_Week</td>
                             <td>@order.Time</td>
+                            <td>@order.Entry_Mode</td>
                             <td>@order.Amount</td>
                             <td>@order.Type_Of_Transaction</td>
                             <td>@order.Country_Of_Transaction</td>

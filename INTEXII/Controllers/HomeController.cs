@@ -407,5 +407,36 @@ namespace INTEXII.Controllers
                 return RedirectToAction("Error"); // Redirect to the appropriate page
             }
         }
+
+        [HttpGet]
+        public IActionResult AddOrderAdmin()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddOrderAdmin(Order newOrder)
+        {
+            try
+            {
+                // Workaround for database-generated identity column, since we are using preexisting data
+                var maxProductId = await context.Orders.MaxAsync(o => (int?)o.Transaction_Id) ?? 0;
+                newOrder.Transaction_Id = (int)(maxProductId + 1);
+
+                if (ModelState.IsValid)
+                {
+                    context.Orders.Add(newOrder);
+                    await context.SaveChangesAsync();
+                    return Json(new { success = true });
+                }
+                return Json(new { success = false, message = "Invalid order data" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding order");
+                return Json(new { success = false, message = "Error adding order" });
+            }
+        }
     }
 }
