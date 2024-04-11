@@ -72,10 +72,6 @@ builder.Services.AddControllersWithViews();
 // Build the app
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-app.UseHttpsRedirection();
-app.UseHsts();
-
 if (!app.Environment.IsDevelopment())
 {
     // Production settings
@@ -86,6 +82,29 @@ else
     // Production settings
     app.UseExceptionHandler("/Home/Error");
 }
+
+// Configure the HTTP request pipeline.
+app.UseHttpsRedirection();
+app.UseHsts();
+
+// CSP Configuration goes here
+app.Use(async (context, next) =>
+{
+    // Other middleware
+
+    // CSP Configuration
+    var csp = "default-src 'self'; " +
+              "script-src 'self' 'unsafe-inline' https://apis.google.com https://ajax.googleapis.com https://code.jquery.com https://stackpath.bootstrapcdn.com; " + // Scripts
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://stackpath.bootstrapcdn.com; " + // Styles
+              "img-src 'self' data: https://m.media-amazon.com https://*.lego.com https://*.blob.core.windows.net https://images.brickset.com https://th.bing.com https://cdn.rebrickable.com https://www.brickeconomy.com https://www.barnorama.com https://i.ytimg.com https://img.brickowl.com; " + // Images
+              "font-src 'self' https://fonts.gstatic.com data:; " + // Fonts
+              "connect-src 'self' https://accounts.google.com ws://localhost:* wss://localhost:* http://localhost:*; " + // Connections including WebSockets
+              "frame-src 'self' https://accounts.google.com; " + // Frames
+              "frame-ancestors 'none';"; // No framing allowed
+
+    context.Response.Headers.Add("Content-Security-Policy", csp);
+    await next();
+});
 
 // App Configuration
 app.UseStaticFiles();
