@@ -480,7 +480,6 @@ namespace INTEXII.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> AdminOrders(int page = 1)
         {
             ViewBag.CartItemCount = GetCartItemCount();
@@ -500,11 +499,83 @@ namespace INTEXII.Controllers
                                      .Take(pageSize)
                                      .ToListAsync();
 
-                // Pass total order count and current page to the view for pagination
+                // Predict fraud type for orders
+                var predictions = new List<Prediction>();
+                var fraudTypeDict = new Dictionary<int, string>
+        {
+            {0, "no" },
+            {1, "yes"},
+        };
+
+                foreach (var order in orders)
+                {
+                    // Calculate Days since January 1, 2022
+                    var january1_2022 = new DateOnly(2022, 1, 1);
+                    var recordDate = order.Date.HasValue ? new DateTime(order.Date.Value.Year, order.Date.Value.Month, order.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+                    var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+
+                    var input = new List<float>
+            {
+                (float)order.Customer_Id,
+                (float)order.Time,
+                // fix amount if it's null
+                (float)(order.Amount ?? 0),
+                // fix date
+                daysSinceJan2022,
+                // Check the dummy coded data
+                order.Day_Of_Week == "Mon" ? 1 : 0,
+                order.Day_Of_Week == "Sat" ? 1 : 0,
+                order.Day_Of_Week == "Sun" ? 1 : 0,
+                order.Day_Of_Week == "Thu" ? 1 : 0,
+                order.Day_Of_Week == "Tue" ? 1 : 0,
+                order.Day_Of_Week == "Wed" ? 1 : 0,
+                order.Entry_Mode == "Pin" ? 1 : 0,
+                order.Entry_Mode == "Tap" ? 1 : 0,
+                order.Type_Of_Transaction == "Online" ? 1 : 0,
+                order.Type_Of_Transaction == "POS" ? 1 : 0,
+                order.Country_Of_Transaction == "India" ? 1 : 0,
+                order.Country_Of_Transaction == "Russia" ? 1 : 0,
+                order.Country_Of_Transaction == "USA" ? 1 : 0,
+                order.Country_Of_Transaction == "United Kingdom" ? 1 : 0,
+                (order.Shipping_Address ?? order.Country_Of_Transaction) == "India" ? 1 : 0,
+                (order.Shipping_Address ?? order.Country_Of_Transaction) == "Russia" ? 1 : 0,
+                (order.Shipping_Address ?? order.Country_Of_Transaction) == "USA" ? 1 : 0,
+                (order.Shipping_Address ?? order.Country_Of_Transaction) == "United Kingdom" ? 1 : 0,
+                order.Bank == "HSBC" ? 1 : 0,
+                order.Bank == "Halifax" ? 1 : 0,
+                order.Bank == "Lloyds" ? 1 : 0,
+                order.Bank == "Metro" ? 1 : 0,
+                order.Bank == "Monzo" ? 1 : 0,
+                order.Bank == "RBS" ? 1 : 0,
+                order.Type_Of_Card == "Visa" ? 1 : 0,
+                (float)(order.Fraud ?? 0.0)
+            };
+
+                    var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
+                    var inputs = new List<NamedOnnxValue>
+            {
+                NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
+            };
+
+                    int predictionResult;
+
+                    using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form
+                    {
+                        var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
+                        predictionResult = prediction != null && prediction.Length > 0 ? (int)prediction[0] : -1; // Default value in case of error
+                    }
+
+                    int orderIdentifier = (int)order.Transaction_Id; // Assuming Transaction_Id is the correct identifier for the order
+
+                    // Add the prediction to the list
+                    predictions.Add(new Prediction { Order_Id = orderIdentifier, Prediction_Outcome = predictionResult });
+                }
+
+                // Pass orders, predictions, total order count, and current page to the view for pagination
                 ViewData["TotalOrders"] = ordersQuery.Count();
                 ViewData["CurrentPage"] = page;
 
-                return View(orders);
+                return View((orders.AsEnumerable(), predictions.AsEnumerable()));
             }
             catch (Exception ex)
             {
@@ -723,7 +794,7 @@ namespace INTEXII.Controllers
         //{
         //    var records = context.Orders
         //        .OrderByDescending(o => o.Date)
-        //        .Take(20)
+        //        .Take(100)
         //        .ToList();
         //    var predictions = new List<OrderPrediction>();
 

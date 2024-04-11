@@ -1,7 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Admin - Orders";
 }
-@model IEnumerable<INTEXII.Models.Order>
+@model (IEnumerable<INTEXII.Models.Order>, IEnumerable<INTEXII.Models.Prediction>)
 
 @{
     ViewData["Title"] = "Admin - Orders";
@@ -15,7 +15,7 @@
     <main id="main">
         <h1>Order Management</h1>
 
-        @if (Model.Any())
+        @if (Model.Item1.Any())
         {
             <table class="table">
                 <thead>
@@ -31,28 +31,34 @@
                         <th>Shipping Address</th>
                         <th>Bank</th>
                         <th>Type of Card</th>
-                        <th>Fraud</th>
+                        <th>Actual Fraud</th>
+                        <th>Prediction Fraud</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var order in Model)
+                    @foreach (var order in Model.Item1)
                     {
-                        <tr>
-                            <td>@order.Transaction_Id</td>
-                            <td>@order.Customer_Id</td>
-                            <td>@order.Date?.ToString("yyyy-MM-dd")</td>
-                            <td>@order.Day_Of_Week</td>
-                            <td>@order.Time</td>
-                            <td>@order.Amount</td>
-                            <td>@order.Type_Of_Transaction</td>
-                            <td>@order.Country_Of_Transaction</td>
-                            <td>@order.Shipping_Address</td>
-                            <td>@order.Bank</td>
-                            <td>@order.Type_Of_Card</td>
-                            <td>@(order.Fraud == 1 ? "True" : "False")</td>
-                        </tr>
+                        var prediction = Model.Item2.FirstOrDefault(p => p.Order_Id == order.Transaction_Id && p.Prediction_Outcome == 1);
+                        if (prediction != null)
+                        {
+                            <tr>
+                                <td>@order.Transaction_Id</td>
+                                <td>@order.Customer_Id</td>
+                                <td>@order.Date?.ToString("yyyy-MM-dd")</td>
+                                <td>@order.Day_Of_Week</td>
+                                <td>@order.Time</td>
+                                <td>@order.Amount</td>
+                                <td>@order.Type_Of_Transaction</td>
+                                <td>@order.Country_Of_Transaction</td>
+                                <td>@order.Shipping_Address</td>
+                                <td>@order.Bank</td>
+                                <td>@order.Type_Of_Card</td>
+                                <td>@(prediction.Prediction_Outcome == 1 ? "True" : "False")</td>
+                            </tr>
+                        }
                     }
                 </tbody>
+
             </table>
 
             <nav aria-label="Page navigation" class="pagination-wrapper">
