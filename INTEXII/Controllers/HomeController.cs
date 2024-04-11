@@ -435,8 +435,8 @@ namespace INTEXII.Controllers
             // Dictionary mapping the numeric prediction to an animal type
             var fraud_type_dict = new Dictionary<int, string>
             {
-                {0, "no" },
-                {1, "yes"},
+                {0, "Good Purchase" },
+                {1, "Fraudulent Purchase"},
             };
 
             //Calculate Days since January 1, 2022
