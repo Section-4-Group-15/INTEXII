@@ -43,6 +43,23 @@
                 <p><strong>Primary Color:</strong> @Model.Products.FirstOrDefault()?.Primary_Color</p>
                 <p><strong>Secondary Color:</strong> @Model.Products.FirstOrDefault()?.Secondary_Color</p>
                 <p><strong>Rating:</strong> <span class="icon-rating">★ ★ ★ ★ ★</span></p>
+                <p>
+                    <strong>Category:</strong>
+                    @{
+                        var category1 = Model.Products.FirstOrDefault()?.Category_1;
+                        var category2 = Model.Products.FirstOrDefault()?.Category_2;
+
+                        if (!string.IsNullOrEmpty(category1))
+                        {
+                            @category1
+
+                            if (!string.IsNullOrEmpty(category2))
+                            {
+                                @(" and " + category2)
+                            }
+                        }
+                    }
+                </p>
                 <h2 class="text-success">$@Model.Products.FirstOrDefault()?.Price</h2>
 
 
