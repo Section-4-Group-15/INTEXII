@@ -184,7 +184,7 @@ namespace INTEXII.Controllers
         {
             ViewBag.CartItemCount = GetCartItemCount();
 
-            var product = context.Products.FirstOrDefault(p => p.Product_ID == id);
+            var product = context.Products.FirstOrDefault(p => p.product_ID == id);
 
             if (product == null)
             {
@@ -275,7 +275,7 @@ namespace INTEXII.Controllers
         public async Task<IActionResult> AdminProducts()
         {
             ViewBag.CartItemCount = GetCartItemCount();
-            var products = await context.Products.OrderBy(p => p.Product_ID).ToListAsync();
+            var products = await context.Products.OrderBy(p => p.product_ID).ToListAsync();
             return View(products);
         }
 
