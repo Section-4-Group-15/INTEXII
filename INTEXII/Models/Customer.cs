@@ -7,7 +7,7 @@ namespace INTEXII.Models;
 public partial class Customer
 {
     [Key]
-    public short CustomerId { get; set; }
+    public short customer_ID { get; set; }
 
     public string? FirstName { get; set; }
 
