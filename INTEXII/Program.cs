@@ -7,6 +7,7 @@ using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddEnvironmentVariables();
 var keyVaultEndpoint = new Uri(Environment.GetEnvironmentVariable("VaultUri"));
 builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());
 var services = builder.Services;
@@ -28,14 +29,22 @@ catch (Exception ex)
 
 
 var connection = String.Empty;
-if (builder.Environment.IsDevelopment())
+try
 {
-    builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.Development.json");
-    connection = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Configuration.AddJsonFile("appsettings.Development.json").AddEnvironmentVariables();
+        connection = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+    }
+    else
+    {
+        builder.Configuration.AddEnvironmentVariables();
+        connection = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING");
+    }
 }
-else
+catch (Exception ex)
 {
-    connection = Environment.GetEnvironmentVariable("INTEXIIIdentityDbContextConnection");
+    Console.WriteLine(ex.Message);
 }
 
 builder.Services.AddDbContext<BrickwellContext>(options =>

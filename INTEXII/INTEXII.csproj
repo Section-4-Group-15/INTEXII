@@ -8,19 +8,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="wwwroot\ZenBlog\.vs\VSWorkspaceState.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="wwwroot\ZenBlog\.vs\slnx.sqlite" />
-    <None Include="wwwroot\ZenBlog\.vs\ZenBlog\config\applicationhost.config" />
-    <None Include="wwwroot\ZenBlog\.vs\ZenBlog\FileContentIndex\a2649198-9734-4b8d-ac76-02d14ac02c56.vsidx" />
+    <Compile Remove="wwwroot\ZenBlog\.vs\**" />
+    <Content Remove="wwwroot\ZenBlog\.vs\**" />
+    <EmbeddedResource Remove="wwwroot\ZenBlog\.vs\**" />
+    <None Remove="wwwroot\ZenBlog\.vs\**" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Areas\Identity\Data\" />
     <Folder Include="Migrations\" />
-    <Folder Include="wwwroot\ZenBlog\.vs\ZenBlog\v17\" />
   </ItemGroup>
 
   <ItemGroup>
