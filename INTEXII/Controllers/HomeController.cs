@@ -371,7 +371,7 @@ namespace INTEXII.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> SubmitOrder(string address, string bank, string cardType, int purchaseAmount)
+        public async Task<IActionResult> SubmitOrder(string address, string bank, string cardType)
         {
             try
             {
@@ -380,6 +380,15 @@ namespace INTEXII.Controllers
 
                 var maxCustomerId = await context.Customers.MaxAsync(c => (int?)c.customer_ID) ?? 0;
                 var newCustomerId = (int)(maxCustomerId + 1);
+
+                //
+                // Model Logic to get the fraud prediction
+                //
+
+                // Logic to calculate the amount of the order
+                var purchaseAmount = context.CartProducts
+                    .Where(cp => cp.user_Id == _userManager.GetUserId(User))
+                    .Sum(cp => cp.cost * cp.quantity);
 
                 // Create a new order record
                 var newOrder = new Order
@@ -391,6 +400,11 @@ namespace INTEXII.Controllers
                     type_of_card = cardType,
                     country_of_transaction = address, 
                     shipping_address = address,
+                    type_of_transaction = "Online",
+                    entry_mode = "CVC",
+                    time = (byte?)DateTime.Now.Hour,
+                    day_of_week = DateTime.Now.DayOfWeek.ToString(),
+                    amount = (short?)purchaseAmount,
                     fraud = 1 // Enter the fraud prediction here
                 };
 
@@ -641,6 +655,8 @@ namespace INTEXII.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> AdminOrders(int page = 1)
         {
             ViewBag.CartItemCount = GetCartItemCount();
@@ -651,8 +667,8 @@ namespace INTEXII.Controllers
             {
                 // Order by Date descending, then by Time descending to get most recent orders first
                 var ordersQuery = context.Orders
-                                         .OrderByDescending(o => o.date)
-                                         .ThenByDescending(o => o.time)
+                                         //.OrderByDescending(o => o.date)
+                                         //.ThenByDescending(o => o.time)
                                          .AsQueryable();
 
                 var orders = await ordersQuery
@@ -1011,93 +1027,5 @@ namespace INTEXII.Controllers
 
             return View();
         }
-
-
-
-        //public IActionResult Predict()
-        //{
-        //    var records = context.Orders
-        //        .OrderByDescending(o => o.Date)
-        //        .Take(100)
-        //        .ToList();
-        //    var predictions = new List<OrderPrediction>();
-
-        //    var fraud_type_dict = new Dictionary<int, string>
-        //    {
-        //        {0, "no" },
-        //        {1, "yes"},
-        //    };
-
-        //    foreach (var record in records)
-        //    {
-        //        //Calculate Days since January 1, 2022
-        //        var january1_2022 = new DateOnly(2022, 1, 1);
-        //        var recordDate = record.Date.HasValue ? new DateTime(record.Date.Value.Year, record.Date.Value.Month, record.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
-        //        var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
-
-        //        var input = new List<float>
-        //            {
-        //                (float)record.Customer_Id,
-        //                (float)record.Time,
-        //                // fix amount if its null
-        //                (float)(record.Amount ?? 0),
-
-        //                //fix date
-        //                daysSinceJan2022,
-
-        //                // Check the dummy coded data
-        //                record.Day_Of_Week == "Mon" ? 1 : 0,
-        //                record.Day_Of_Week == "Sat" ? 1 : 0,
-        //                record.Day_Of_Week == "Sun" ? 1 : 0,
-        //                record.Day_Of_Week == "Thu" ? 1 : 0,
-        //                record.Day_Of_Week == "Tue" ? 1 : 0,
-        //                record.Day_Of_Week == "Wed" ? 1 : 0,
-
-        //                record.Entry_Mode == "Pin" ? 1 : 0,
-        //                record.Entry_Mode == "Tap" ? 1 : 0,
-
-        //                record.Type_Of_Transaction == "Online" ? 1 : 0,
-        //                record.Type_Of_Transaction == "POS" ? 1 : 0,
-
-        //                record.Country_Of_Transaction == "India" ? 1 : 0,
-        //                record.Country_Of_Transaction == "Russia" ? 1 : 0,
-        //                record.Country_Of_Transaction == "USA" ? 1 : 0,
-        //                record.Country_Of_Transaction == "United Kingdom" ? 1 : 0,
-
-        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "India" ? 1 : 0,
-        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "Russia" ? 1 : 0,
-        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "USA" ? 1 : 0,
-        //                (record.Shipping_Address ?? record.Country_Of_Transaction) == "United Kingdom" ? 1 : 0,
-
-        //                record.Bank == "HSBC" ? 1 : 0,
-        //                record.Bank == "Halifax" ? 1 : 0,
-        //                record.Bank == "Lloyds" ? 1 : 0,
-        //                record.Bank == "Metro" ? 1 : 0,
-        //                record.Bank == "Monzo" ? 1 : 0,
-        //                record.Bank == "RBS" ? 1 : 0,
-
-        //                record.Type_Of_Card == "Visa" ? 1 : 0
-        //            };
-        //        var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
-
-        //        var inputs = new List<NamedOnnxValue>
-        //            {
-        //                NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
-        //            };
-
-        //        string predictionResult;
-
-
-        //        using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form
-        //        {
-        //            var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
-        //            predictionResult = prediction != null && prediction.Length > 0 ? fraud_type_dict.GetValueOrDefault((int)prediction[0], "Unknown") : "Error in prediction";
-        //        }
-
-        //        predictions.Add(new OrderPrediction { Orders = record, Prediction = predictionResult }); // Add the prediction to the db
-        //    }
-
-        //    return View(predictions);
-        //}
     }
 }

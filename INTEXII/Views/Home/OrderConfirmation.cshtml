@@ -1,5 +1,14 @@
 ﻿@{
-    ViewData["Title"] = "Order on Hold";
+    ViewData["Title"] = "Order Confirmed";
 }
 
-<h3>This is the hold page for good orders.</h3>
+@model ProjectsListViewModel
+
+
+<h2>Thank you!</h2>
+
+<h3>Your order has been placed and will ship in the next 3-5 business days.</h3>
+
+<div>
+    <a asp-controller="Home" asp-action="Index"><button type="button">Back to Home</button></a>
+</div>
