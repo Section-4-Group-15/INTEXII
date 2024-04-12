@@ -31,7 +31,7 @@ namespace INTEXII.Controllers
 
             try
             {
-                _session = new InferenceSession("fraud_model_4.0.onnx");
+                _session = new InferenceSession("fraud_model_5.0.onnx");
                 _logger.LogInformation("ONNX model loaded successfully");
             }
             catch (Exception ex)
@@ -404,9 +404,15 @@ namespace INTEXII.Controllers
                     fraud = 1 // Enter the fraud prediction here
                 };
                 //Calculate Days since January 1, 2022
-                var january1_2022 = new DateOnly(2022, 1, 1);
+                // Get the current date
+                DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+                DateTime todayDateTime = today.ToDateTime(TimeOnly.MinValue);
                 var recordDate = newOrder.date.HasValue ? new DateTime(newOrder.date.Value.Year, newOrder.date.Value.Month, newOrder.date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
-                var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+                DateTime recordDateTime = recordDate;
+
+                TimeSpan daysDifference = recordDateTime.Subtract(todayDateTime);
+                int numberOfDays = daysDifference.Days;
+
                 // Calculate the Current Day of the week
                 var dayOfWeekEnum = DateTime.Now.DayOfWeek; // Get the current day of the week as an enum
                 var dayOfWeekString = dayOfWeekEnum.ToString();
@@ -429,7 +435,7 @@ namespace INTEXII.Controllers
                     // fix amount if its null
                     (float)(purchaseAmount), // Get the purchase amount from the form
                     //fix date
-                    daysSinceJan2022,
+                    numberOfDays,
                     // Hard code based on the actual day
                     dayOfWeekString == "Monday" ? 1 : 0,
                     dayOfWeekString == "Saturday" ? 1 : 0,
@@ -462,7 +468,7 @@ namespace INTEXII.Controllers
                     newOrder.bank == "RBS" ? 1 : 0,
                     // Get from form
                     newOrder.type_of_card == "Visa" ? 1 : 0,
-                    fraudValue
+                    // fraudValue
                 };
                     var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
                     var inputs = new List<NamedOnnxValue>
@@ -673,46 +679,49 @@ namespace INTEXII.Controllers
 
                 foreach (var order in orders)
                 {
-                    // Calculate Days since January 1, 2022
-                    var january1_2022 = new DateOnly(2022, 1, 1);
+                    // Get the current date
+                    DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+                    DateTime todayDateTime = today.ToDateTime(TimeOnly.MinValue);
                     var recordDate = order.date.HasValue ? new DateTime(order.date.Value.Year, order.date.Value.Month, order.date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
-                    var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+                    DateTime recordDateTime = recordDate;
+                    TimeSpan daysDifference = recordDateTime.Subtract(todayDateTime);
+                    int numberOfDays = daysDifference.Days;
 
                     var input = new List<float>
             {
                 (float)order.customer_ID,
-                daysSinceJan2022,
+                numberOfDays,
                 (float)order.time,
                 // fix amount if it's null
                 (float)(order.amount ?? 0),
                 // fix date
                 
                 // Check the dummy coded data
-                //order.day_of_week == "Mon" ? 1 : 0,
-                //order.day_of_week == "Sat" ? 1 : 0,
-                //order.day_of_week == "Sun" ? 1 : 0,
-                //order.day_of_week == "Thu" ? 1 : 0,
-                //order.day_of_week == "Tue" ? 1 : 0,
-                //order.day_of_week == "Wed" ? 1 : 0,
-                //order.entry_mode == "Pin" ? 1 : 0,
-                //order.entry_mode == "Tap" ? 1 : 0,
-                //order.type_of_transaction == "Online" ? 1 : 0,
-                //order.type_of_transaction == "POS" ? 1 : 0,
-                //order.country_of_transaction == "India" ? 1 : 0,
-                //order.country_of_transaction == "Russia" ? 1 : 0,
-                //order.country_of_transaction == "USA" ? 1 : 0,
+                order.day_of_week == "Mon" ? 1 : 0,
+                order.day_of_week == "Sat" ? 1 : 0,
+                order.day_of_week == "Sun" ? 1 : 0,
+                order.day_of_week == "Thu" ? 1 : 0,
+                order.day_of_week == "Tue" ? 1 : 0,
+                order.day_of_week == "Wed" ? 1 : 0,
+                order.entry_mode == "Pin" ? 1 : 0,
+                order.entry_mode == "Tap" ? 1 : 0,
+                order.type_of_transaction == "Online" ? 1 : 0,
+                order.type_of_transaction == "POS" ? 1 : 0,
+                order.country_of_transaction == "India" ? 1 : 0,
+                order.country_of_transaction == "Russia" ? 1 : 0,
+                order.country_of_transaction == "USA" ? 1 : 0,
                 order.country_of_transaction == "United Kingdom" ? 1 : 0,
-                //(order.shipping_address ?? order.country_of_transaction) == "India" ? 1 : 0,
-                //(order.shipping_address ?? order.country_of_transaction) == "Russia" ? 1 : 0,
-                //(order.shipping_address ?? order.country_of_transaction) == "USA" ? 1 : 0,
+                (order.shipping_address ?? order.country_of_transaction) == "India" ? 1 : 0,
+                (order.shipping_address ?? order.country_of_transaction) == "Russia" ? 1 : 0,
+                (order.shipping_address ?? order.country_of_transaction) == "USA" ? 1 : 0,
                 (order.shipping_address ?? order.country_of_transaction) == "United Kingdom" ? 1 : 0,
-                //order.bank == "HSBC" ? 1 : 0,
-                //order.bank == "Halifax" ? 1 : 0,
-                //order.bank == "Lloyds" ? 1 : 0,
-                //order.bank == "Metro" ? 1 : 0,
-                //order.bank == "Monzo" ? 1 : 0,
-                //order.bank == "RBS" ? 1 : 0,
-                //order.type_of_card == "Visa" ? 1 : 0,
+                order.bank == "HSBC" ? 1 : 0,
+                order.bank == "Halifax" ? 1 : 0,
+                order.bank == "Lloyds" ? 1 : 0,
+                order.bank == "Metro" ? 1 : 0,
+                order.bank == "Monzo" ? 1 : 0,
+                order.bank == "RBS" ? 1 : 0,
+                order.type_of_card == "Visa" ? 1 : 0,
                 //(float)(order.fraud ?? 0.0)
             };
                     var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
