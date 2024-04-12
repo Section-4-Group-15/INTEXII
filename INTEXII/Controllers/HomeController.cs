@@ -668,8 +668,8 @@ namespace INTEXII.Controllers
             {
                 // Order by Date descending, then by Time descending to get most recent orders first
                 var ordersQuery = context.Orders
-                                         //.OrderByDescending(o => o.date)
-                                         //.ThenByDescending(o => o.time)
+                                         .OrderByDescending(o => o.date)
+                                         .ThenByDescending(o => o.time)
                                          .AsQueryable();
 
                 var orders = await ordersQuery
