@@ -15,6 +15,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="fraud_model_4.0.onnx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="fraud_model_4.0.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Areas\Identity\Data\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
