@@ -27,7 +27,7 @@
                             <button type="submit" class="btn btn-sm btn-primary">Update</button>
                         </form>
                     </td>
-                    <td>@((item.CartItem.cost * item.CartItem.quantity).ToString("C"))</td>
+                    <td>$@String.Format("{0:F2}", item.CartItem.cost * item.CartItem.quantity)</td>
                     <td>
                         <form asp-controller="Home" asp-action="RemoveFromCart" method="post" onsubmit="return confirmRemove();">
                             <input type="hidden" name="productId" value="@item.CartItem.product_Id" />
@@ -38,7 +38,7 @@
             }
             <tr>
                 <td colspan="3" style="text-align:right"><strong>Subtotal:</strong></td>
-                <td><strong>@(Model.Sum(item => item.CartItem.cost * item.CartItem.quantity).ToString("C"))</strong></td>
+                <td><strong>$@String.Format("{0:F2}", Model.Sum(item => item.CartItem.cost * item.CartItem.quantity))</strong></td>
             </tr>
         </tbody>
     </table>
