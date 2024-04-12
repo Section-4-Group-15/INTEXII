@@ -7,12 +7,12 @@ namespace INTEXII.Models;
 public partial class LineItem
 {
     [Key]
-    public int LineId { get; set; }
-    public int TransactionId { get; set; }
+    public int line_id { get; set; }
+    public int transaction_id { get; set; }
 
-    public byte ProductId { get; set; }
+    public byte product_ID { get; set; }
 
-    public byte Qty { get; set; }
+    public byte qty { get; set; }
 
-    public byte Rating { get; set; }
+    public byte rating { get; set; }
 }

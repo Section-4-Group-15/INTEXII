@@ -381,38 +381,45 @@ namespace INTEXII.Controllers
                 var maxCustomerId = await context.Customers.MaxAsync(c => (int?)c.customer_ID) ?? 0;
                 var newCustomerId = (int)(maxCustomerId + 1);
 
-                // Model Logic
-
-
+                //
+                // Model Logic to get the fraud prediction
+                //
 
                 // Create a new order record
                 var newOrder = new Order
                 {
-                    Customer_Id = newCustomerId,
-                    Date = DateOnly.FromDateTime(DateTime.Now),
-                    Bank = bank,
-                    Type_Of_Card = cardType,
-                    Country_Of_Transaction = address, 
-                    Shipping_Address = address,
-                    Fraud = 0 // Assume not fraud initially, fraud check could be updated later based on ML model prediction
+                    transaction_ID = (int)(await context.Orders.MaxAsync(o => (int?)o.transaction_ID) ?? 0) + 1,
+                    customer_ID = newCustomerId,
+                    date = DateOnly.FromDateTime(DateTime.Now),
+                    bank = bank,
+                    type_of_card = cardType,
+                    country_of_transaction = address, 
+                    shipping_address = address,
+                    fraud = 1 // Enter the fraud prediction here
                 };
 
                 // Save new order to get OrderID
                 context.Orders.Add(newOrder);
                 await context.SaveChangesAsync();
 
+                // Get the current user's cart items
                 var userId = _userManager.GetUserId(User);
                 var cartItems = await context.CartProducts.Where(cp => cp.user_Id == userId).ToListAsync();
+
+                // Get the max line item ID and increment for new line items
+                var maxLineItemId = await context.LineItems.MaxAsync(li => (int?)li.line_id) ?? 0;
+                var newLineItemId = (int)(maxLineItemId + 1);
 
                 // Convert cart items to line items
                 foreach (var item in cartItems)
                 {
                     var lineItem = new LineItem
                     {
-                        TransactionId = (int)newOrder.Transaction_Id,
-                        ProductId = (byte)item.product_Id,
-                        Qty = (byte)item.quantity,
-                        Rating = 0 // Hard coded rating
+                        line_id = newLineItemId++,
+                        transaction_id = (int)newOrder.transaction_ID,
+                        product_ID = (byte)item.product_Id,
+                        qty = (byte)item.quantity,
+                        rating = 0 // Hard coded rating
                     };
 
                     context.LineItems.Add(lineItem);
@@ -424,9 +431,14 @@ namespace INTEXII.Controllers
 
 
                 // Check fraud prediction and redirect to different routes
-
-                // Redirect to a confirmation page or view
-                return RedirectToAction("OrderConfirmation", new { orderId = newOrder.Transaction_Id });
+                if (newOrder.fraud == 1)
+                {
+                    return RedirectToAction("OrderHold");
+                }
+                else
+                {
+                    return RedirectToAction("OrderConfirmation");
+                }
             }
             catch (Exception ex)
             {
@@ -435,7 +447,17 @@ namespace INTEXII.Controllers
             }
         }
 
+        public IActionResult OrderConfirmation()
+        {
+            ViewBag.CartItemCount = GetCartItemCount();
+            return View();
+        }
 
+        public IActionResult OrderHold()
+        {
+            ViewBag.CartItemCount = GetCartItemCount();
+            return View();
+        }
 
         // Admin Controller
         [Authorize(Roles = "Admin")]
@@ -538,8 +560,8 @@ namespace INTEXII.Controllers
             {
                 // Order by Date descending, then by Time descending to get most recent orders first
                 var ordersQuery = context.Orders
-                                         .OrderByDescending(o => o.Date)
-                                         .ThenByDescending(o => o.Time)
+                                         .OrderByDescending(o => o.date)
+                                         .ThenByDescending(o => o.time)
                                          .AsQueryable();
 
                 var orders = await ordersQuery
@@ -559,44 +581,44 @@ namespace INTEXII.Controllers
                 {
                     // Calculate Days since January 1, 2022
                     var january1_2022 = new DateOnly(2022, 1, 1);
-                    var recordDate = order.Date.HasValue ? new DateTime(order.Date.Value.Year, order.Date.Value.Month, order.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+                    var recordDate = order.date.HasValue ? new DateTime(order.date.Value.Year, order.date.Value.Month, order.date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
                     var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
 
                     var input = new List<float>
             {
-                (float)order.Customer_Id,
-                (float)order.Time,
+                (float)order.customer_ID,
+                (float)order.time,
                 // fix amount if it's null
-                (float)(order.Amount ?? 0),
+                (float)(order.amount ?? 0),
                 // fix date
                 daysSinceJan2022,
                 // Check the dummy coded data
-                order.Day_Of_Week == "Mon" ? 1 : 0,
-                order.Day_Of_Week == "Sat" ? 1 : 0,
-                order.Day_Of_Week == "Sun" ? 1 : 0,
-                order.Day_Of_Week == "Thu" ? 1 : 0,
-                order.Day_Of_Week == "Tue" ? 1 : 0,
-                order.Day_Of_Week == "Wed" ? 1 : 0,
-                order.Entry_Mode == "Pin" ? 1 : 0,
-                order.Entry_Mode == "Tap" ? 1 : 0,
-                order.Type_Of_Transaction == "Online" ? 1 : 0,
-                order.Type_Of_Transaction == "POS" ? 1 : 0,
-                order.Country_Of_Transaction == "India" ? 1 : 0,
-                order.Country_Of_Transaction == "Russia" ? 1 : 0,
-                order.Country_Of_Transaction == "USA" ? 1 : 0,
-                order.Country_Of_Transaction == "United Kingdom" ? 1 : 0,
-                (order.Shipping_Address ?? order.Country_Of_Transaction) == "India" ? 1 : 0,
-                (order.Shipping_Address ?? order.Country_Of_Transaction) == "Russia" ? 1 : 0,
-                (order.Shipping_Address ?? order.Country_Of_Transaction) == "USA" ? 1 : 0,
-                (order.Shipping_Address ?? order.Country_Of_Transaction) == "United Kingdom" ? 1 : 0,
-                order.Bank == "HSBC" ? 1 : 0,
-                order.Bank == "Halifax" ? 1 : 0,
-                order.Bank == "Lloyds" ? 1 : 0,
-                order.Bank == "Metro" ? 1 : 0,
-                order.Bank == "Monzo" ? 1 : 0,
-                order.Bank == "RBS" ? 1 : 0,
-                order.Type_Of_Card == "Visa" ? 1 : 0,
-                (float)(order.Fraud ?? 0.0)
+                order.day_of_week == "Mon" ? 1 : 0,
+                order.day_of_week == "Sat" ? 1 : 0,
+                order.day_of_week == "Sun" ? 1 : 0,
+                order.day_of_week == "Thu" ? 1 : 0,
+                order.day_of_week == "Tue" ? 1 : 0,
+                order.day_of_week == "Wed" ? 1 : 0,
+                order.entry_mode == "Pin" ? 1 : 0,
+                order.entry_mode == "Tap" ? 1 : 0,
+                order.type_of_transaction == "Online" ? 1 : 0,
+                order.type_of_transaction == "POS" ? 1 : 0,
+                order.country_of_transaction == "India" ? 1 : 0,
+                order.country_of_transaction == "Russia" ? 1 : 0,
+                order.country_of_transaction == "USA" ? 1 : 0,
+                order.country_of_transaction == "United Kingdom" ? 1 : 0,
+                (order.shipping_address ?? order.country_of_transaction) == "India" ? 1 : 0,
+                (order.shipping_address ?? order.country_of_transaction) == "Russia" ? 1 : 0,
+                (order.shipping_address ?? order.country_of_transaction) == "USA" ? 1 : 0,
+                (order.shipping_address ?? order.country_of_transaction) == "United Kingdom" ? 1 : 0,
+                order.bank == "HSBC" ? 1 : 0,
+                order.bank == "Halifax" ? 1 : 0,
+                order.bank == "Lloyds" ? 1 : 0,
+                order.bank == "Metro" ? 1 : 0,
+                order.bank == "Monzo" ? 1 : 0,
+                order.bank == "RBS" ? 1 : 0,
+                order.type_of_card == "Visa" ? 1 : 0,
+                (float)(order.fraud ?? 0.0)
             };
 
                     var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
@@ -613,7 +635,7 @@ namespace INTEXII.Controllers
                         predictionResult = prediction != null && prediction.Length > 0 ? (int)prediction[0] : -1; // Default value in case of error
                     }
 
-                    int orderIdentifier = (int)order.Transaction_Id; // Assuming Transaction_Id is the correct identifier for the order
+                    int orderIdentifier = (int)order.transaction_ID; // Assuming Transaction_Id is the correct identifier for the order
 
                     // Add the prediction to the list
                     predictions.Add(new Prediction { Order_Id = orderIdentifier, Prediction_Outcome = predictionResult });
@@ -803,55 +825,55 @@ namespace INTEXII.Controllers
 
             //Calculate Days since January 1, 2022
             var january1_2022 = new DateOnly(2022, 1, 1);
-            var recordDate = newOrder.Date.HasValue ? new DateTime(newOrder.Date.Value.Year, newOrder.Date.Value.Month, newOrder.Date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+            var recordDate = newOrder.date.HasValue ? new DateTime(newOrder.date.Value.Year, newOrder.date.Value.Month, newOrder.date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
             var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
 
             try
             {
                 var input = new List<float>
                     {
-                        (float)newOrder.Customer_Id,
-                        (float)newOrder.Time,
+                        (float)newOrder.customer_ID,
+                        (float)newOrder.time,
                         // fix amount if its null
-                        (float)(newOrder.Amount ?? 0),
+                        (float)(newOrder.amount ?? 0),
 
                         //fix date
                         daysSinceJan2022,
 
                         // Check the dummy coded data
-                        newOrder.Day_Of_Week == "Mon" ? 1 : 0,
-                        newOrder.Day_Of_Week == "Sat" ? 1 : 0,
-                        newOrder.Day_Of_Week == "Sun" ? 1 : 0,
-                        newOrder.Day_Of_Week == "Thu" ? 1 : 0,
-                        newOrder.Day_Of_Week == "Tue" ? 1 : 0,
-                        newOrder.Day_Of_Week == "Wed" ? 1 : 0,
+                        newOrder.day_of_week == "Mon" ? 1 : 0,
+                        newOrder.day_of_week == "Sat" ? 1 : 0,
+                        newOrder.day_of_week == "Sun" ? 1 : 0,
+                        newOrder.day_of_week == "Thu" ? 1 : 0,
+                        newOrder.day_of_week == "Tue" ? 1 : 0,
+                        newOrder.day_of_week == "Wed" ? 1 : 0,
 
-                        newOrder.Entry_Mode == "Pin" ? 1 : 0,
-                        newOrder.Entry_Mode == "Tap" ? 1 : 0,
+                        newOrder.entry_mode == "Pin" ? 1 : 0,
+                        newOrder.entry_mode == "Tap" ? 1 : 0,
 
-                        newOrder.Type_Of_Transaction == "Online" ? 1 : 0,
-                        newOrder.Type_Of_Transaction == "POS" ? 1 : 0,
+                        newOrder.type_of_transaction == "Online" ? 1 : 0,
+                        newOrder.type_of_transaction == "POS" ? 1 : 0,
 
-                        newOrder.Country_Of_Transaction == "India" ? 1 : 0,
-                        newOrder.Country_Of_Transaction == "Russia" ? 1 : 0,
-                        newOrder.Country_Of_Transaction == "USA" ? 1 : 0,
-                        newOrder.Country_Of_Transaction == "United Kingdom" ? 1 : 0,
+                        newOrder.country_of_transaction == "India" ? 1 : 0,
+                        newOrder.country_of_transaction == "Russia" ? 1 : 0,
+                        newOrder.country_of_transaction == "USA" ? 1 : 0,
+                        newOrder.country_of_transaction == "United Kingdom" ? 1 : 0,
 
-                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "India" ? 1 : 0,
-                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "Russia" ? 1 : 0,
-                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "USA" ? 1 : 0,
-                        (newOrder.Shipping_Address ?? newOrder.Country_Of_Transaction) == "United Kingdom" ? 1 : 0,
+                        (newOrder.shipping_address ?? newOrder.country_of_transaction) == "India" ? 1 : 0,
+                        (newOrder.shipping_address ?? newOrder.country_of_transaction) == "Russia" ? 1 : 0,
+                        (newOrder.shipping_address ?? newOrder.country_of_transaction) == "USA" ? 1 : 0,
+                        (newOrder.shipping_address ?? newOrder.country_of_transaction) == "United Kingdom" ? 1 : 0,
 
-                        newOrder.Bank == "HSBC" ? 1 : 0,
-                        newOrder.Bank == "Halifax" ? 1 : 0,
-                        newOrder.Bank == "Lloyds" ? 1 : 0,
-                        newOrder.Bank == "Metro" ? 1 : 0,
-                        newOrder.Bank == "Monzo" ? 1 : 0,
-                        newOrder.Bank == "RBS" ? 1 : 0,
+                        newOrder.bank == "HSBC" ? 1 : 0,
+                        newOrder.bank == "Halifax" ? 1 : 0,
+                        newOrder.bank == "Lloyds" ? 1 : 0,
+                        newOrder.bank == "Metro" ? 1 : 0,
+                        newOrder.bank == "Monzo" ? 1 : 0,
+                        newOrder.bank == "RBS" ? 1 : 0,
 
-                        newOrder.Type_Of_Card == "Visa" ? 1 : 0,
+                        newOrder.type_of_card == "Visa" ? 1 : 0,
 
-                        (float)newOrder.Fraud
+                        (float)newOrder.fraud
                     };
 
                 var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
@@ -871,8 +893,8 @@ namespace INTEXII.Controllers
                         ViewBag.Prediction = fraudType;
 
                         // Workaround for database-generated identity column, since we are using preexisting data
-                        var maxProductId = await context.Orders.MaxAsync(o => (int?)o.Transaction_Id) ?? 0;
-                        newOrder.Transaction_Id = (int)(maxProductId + 1);
+                        var maxProductId = await context.Orders.MaxAsync(o => (int?)o.transaction_ID) ?? 0;
+                        newOrder.transaction_ID = (int)(maxProductId + 1);
 
                         if (ModelState.IsValid)
                         {
