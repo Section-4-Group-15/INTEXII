@@ -19,7 +19,7 @@
             {
                 <tr>
                     <td>@item.ProductName</td>
-                    <td>@item.CartItem.cost.ToString("C")</td>
+                    <td>$@String.Format("{0:F2}", item.CartItem.cost)</td>
                     <td>
                         <form asp-controller="Home" asp-action="UpdateQuantity" method="post" onsubmit="return confirmUpdate();">
                             <input type="hidden" name="productId" value="@item.CartItem.product_Id" />
