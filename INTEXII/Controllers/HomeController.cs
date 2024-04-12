@@ -385,6 +385,11 @@ namespace INTEXII.Controllers
                 // Model Logic to get the fraud prediction
                 //
 
+                // Logic to calculate the amount of the order
+                var purchaseAmount = context.CartProducts
+                    .Where(cp => cp.user_Id == _userManager.GetUserId(User))
+                    .Sum(cp => cp.cost * cp.quantity);
+
                 // Create a new order record
                 var newOrder = new Order
                 {
@@ -395,6 +400,11 @@ namespace INTEXII.Controllers
                     type_of_card = cardType,
                     country_of_transaction = address, 
                     shipping_address = address,
+                    type_of_transaction = "Online",
+                    entry_mode = "CVC",
+                    time = (byte?)DateTime.Now.Hour,
+                    day_of_week = DateTime.Now.DayOfWeek.ToString(),
+                    amount = (short?)purchaseAmount,
                     fraud = 1 // Enter the fraud prediction here
                 };
 
@@ -550,6 +560,8 @@ namespace INTEXII.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
+
         public async Task<IActionResult> AdminOrders(int page = 1)
         {
             ViewBag.CartItemCount = GetCartItemCount();
@@ -560,8 +572,8 @@ namespace INTEXII.Controllers
             {
                 // Order by Date descending, then by Time descending to get most recent orders first
                 var ordersQuery = context.Orders
-                                         .OrderByDescending(o => o.date)
-                                         .ThenByDescending(o => o.time)
+                                         //.OrderByDescending(o => o.date)
+                                         //.ThenByDescending(o => o.time)
                                          .AsQueryable();
 
                 var orders = await ordersQuery
