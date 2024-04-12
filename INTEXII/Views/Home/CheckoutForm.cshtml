@@ -29,8 +29,9 @@
     </div>
     <div class="form-group">
         <label for="purchaseAmount">Purchase Amount</label>
-        <input type="text" readonly class="form-control-plaintext" id="purchaseAmount" value="@ViewBag.Subtotal">
-        <input type="hidden" name="purchaseAmount" value="@ViewBag.Subtotal">
+        <input type="text" readonly class="form-control-plaintext" id="purchaseAmount" value="$@String.Format("{0:F2}", ViewBag.Subtotal)">
+        <input type="hidden" name="purchaseAmount" value="$@String.Format("{0:F2}", ViewBag.Subtotal)">
+
     </div>
     <div class="form-group">
         <label for="bank">Bank</label>
