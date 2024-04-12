@@ -36,7 +36,7 @@ namespace INTEXII.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error leading the ONNX model.");
+                _logger.LogError($"Error loading the ONNX model: {ex.Message}");
             }
         }
 
@@ -378,6 +378,7 @@ namespace INTEXII.Controllers
                 if (!User.Identity.IsAuthenticated)
                     return RedirectToAction("Login");
 
+                // Get the max customer ID and increment for new customers
                 var maxCustomerId = await context.Customers.MaxAsync(c => (int?)c.customer_ID) ?? 0;
                 var newCustomerId = (int)(maxCustomerId + 1);
 
