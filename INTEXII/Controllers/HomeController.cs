@@ -920,18 +920,7 @@ namespace INTEXII.Controllers
 
             return View();
         }
-        [Authorize]
-        public IActionResult OrderConfirmation()
-        {
-            ViewBag.CartItemCount = GetCartItemCount();
-            return View();
-        }
-        [Authorize]
-        public IActionResult OrderHold()
-        {
-            ViewBag.CartItemCount = GetCartItemCount();
-            return View();
-        }
+
 
 
 
