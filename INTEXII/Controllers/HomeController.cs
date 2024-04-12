@@ -31,7 +31,7 @@ namespace INTEXII.Controllers
 
             try
             {
-                _session = new InferenceSession("fraud_model.onnx");
+                _session = new InferenceSession("fraud_model_5.0.onnx");
                 _logger.LogInformation("ONNX model loaded successfully");
             }
             catch (Exception ex)
@@ -368,7 +368,6 @@ namespace INTEXII.Controllers
                 return RedirectToAction("Error");
             }
         }
-
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> SubmitOrder(string address, string bank, string cardType)
@@ -377,20 +376,16 @@ namespace INTEXII.Controllers
             {
                 if (!User.Identity.IsAuthenticated)
                     return RedirectToAction("Login");
-
                 // Get the max customer ID and increment for new customers
                 var maxCustomerId = await context.Customers.MaxAsync(c => (int?)c.customer_ID) ?? 0;
                 var newCustomerId = (int)(maxCustomerId + 1);
-
                 //
                 // Model Logic to get the fraud prediction
                 //
-
                 // Logic to calculate the amount of the order
                 var purchaseAmount = context.CartProducts
                     .Where(cp => cp.user_Id == _userManager.GetUserId(User))
                     .Sum(cp => cp.cost * cp.quantity);
-
                 // Create a new order record
                 var newOrder = new Order
                 {
@@ -399,7 +394,7 @@ namespace INTEXII.Controllers
                     date = DateOnly.FromDateTime(DateTime.Now),
                     bank = bank,
                     type_of_card = cardType,
-                    country_of_transaction = address, 
+                    country_of_transaction = address,
                     shipping_address = address,
                     type_of_transaction = "Online",
                     entry_mode = "CVC",
@@ -408,80 +403,78 @@ namespace INTEXII.Controllers
                     amount = (short?)purchaseAmount,
                     fraud = 1 // Enter the fraud prediction here
                 };
-
                 //Calculate Days since January 1, 2022
-                var january1_2022 = new DateOnly(2022, 1, 1);
+                // Get the current date
+                DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+                DateTime todayDateTime = today.ToDateTime(TimeOnly.MinValue);
                 var recordDate = newOrder.date.HasValue ? new DateTime(newOrder.date.Value.Year, newOrder.date.Value.Month, newOrder.date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
-                var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+                DateTime recordDateTime = recordDate;
+
+                TimeSpan daysDifference = recordDateTime.Subtract(todayDateTime);
+                int numberOfDays = daysDifference.Days;
 
                 // Calculate the Current Day of the week
                 var dayOfWeekEnum = DateTime.Now.DayOfWeek; // Get the current day of the week as an enum
                 var dayOfWeekString = dayOfWeekEnum.ToString();
-
                 // Calculate the Current Hour for the time field
                 int currentHour = DateTime.Now.Hour;
-
                 // Set the online order thing
                 var entryMode = "CVC";
                 var typeOfTransaction = "Online";
-
                 // Set the Country_of_Transaction
                 var countryOfTransaction = newOrder.shipping_address ?? newOrder.country_of_transaction;
-
                 // Hard code the fraud value because it doesn't matter, will get dropped in the prediction after selecting features.
                 var fraudValue = 0;
-
+                byte? predictedFraudValue;
                 try
                 {
                     var input = new List<float>
-                        {
-                            (float)newOrder.customer_ID, // need to get the customer id from something
-                            currentHour, // need to get the hour dynamically
-                            // fix amount if its null
-                            (float)(purchaseAmount), // Get the purchase amount from the form
-                            //fix date
-                            daysSinceJan2022,
-                            // Hard code based on the actual day
-                            dayOfWeekString == "Monday" ? 1 : 0,
-                            dayOfWeekString == "Saturday" ? 1 : 0,
-                            dayOfWeekString == "Sunday" ? 1 : 0,
-                            dayOfWeekString == "Thursday" ? 1 : 0,
-                            dayOfWeekString == "Tuesday" ? 1 : 0,
-                            dayOfWeekString == "Wednesday" ? 1 : 0,
-                            // Hard code to CVC since this is all online orders
-                            entryMode == "Pin" ? 1 : 0,
-                            entryMode == "Tap" ? 1 : 0,
-                            // Hard code to online since this is all online orders
-                            typeOfTransaction == "Online" ? 1 : 0,
-                            typeOfTransaction == "POS" ? 1 : 0,
-                            // Get from the Shipping Address value, hard code
-                            countryOfTransaction == "India" ? 1 : 0,
-                            countryOfTransaction == "Russia" ? 1 : 0,
-                            countryOfTransaction == "USA" ? 1 : 0,
-                            countryOfTransaction == "United Kingdom" ? 1 : 0,
-                            // Get from form
-                            (newOrder.shipping_address ?? newOrder.country_of_transaction) == "India" ? 1 : 0,
-                            (newOrder.shipping_address ?? newOrder.country_of_transaction) == "Russia" ? 1 : 0,
-                            (newOrder.shipping_address ?? newOrder.country_of_transaction) == "USA" ? 1 : 0,
-                            (newOrder.shipping_address ?? newOrder.country_of_transaction) == "United Kingdom" ? 1 : 0,
-                            // Get from form
-                            newOrder.bank == "HSBC" ? 1 : 0,
-                            newOrder.bank == "Halifax" ? 1 : 0,
-                            newOrder.bank == "Lloyds" ? 1 : 0,
-                            newOrder.bank == "Metro" ? 1 : 0,
-                            newOrder.bank == "Monzo" ? 1 : 0,
-                            newOrder.bank == "RBS" ? 1 : 0,
-                            // Get from form
-                            newOrder.type_of_card == "Visa" ? 1 : 0,
-                            fraudValue
-                        };
+                {
+                    (float)newOrder.customer_ID, // need to get the customer id from something
+                    currentHour, // need to get the hour dynamically
+                    // fix amount if its null
+                    (float)(purchaseAmount), // Get the purchase amount from the form
+                    //fix date
+                    numberOfDays,
+                    // Hard code based on the actual day
+                    dayOfWeekString == "Monday" ? 1 : 0,
+                    dayOfWeekString == "Saturday" ? 1 : 0,
+                    dayOfWeekString == "Sunday" ? 1 : 0,
+                    dayOfWeekString == "Thursday" ? 1 : 0,
+                    dayOfWeekString == "Tuesday" ? 1 : 0,
+                    dayOfWeekString == "Wednesday" ? 1 : 0,
+                    // Hard code to CVC since this is all online orders
+                    entryMode == "Pin" ? 1 : 0,
+                    entryMode == "Tap" ? 1 : 0,
+                    // Hard code to online since this is all online orders
+                    typeOfTransaction == "Online" ? 1 : 0,
+                    typeOfTransaction == "POS" ? 1 : 0,
+                    // Get from the Shipping Address value, hard code
+                    countryOfTransaction == "India" ? 1 : 0,
+                    countryOfTransaction == "Russia" ? 1 : 0,
+                    countryOfTransaction == "USA" ? 1 : 0,
+                    countryOfTransaction == "United Kingdom" ? 1 : 0,
+                    // Get from form
+                    (newOrder.shipping_address ?? newOrder.country_of_transaction) == "India" ? 1 : 0,
+                    (newOrder.shipping_address ?? newOrder.country_of_transaction) == "Russia" ? 1 : 0,
+                    (newOrder.shipping_address ?? newOrder.country_of_transaction) == "USA" ? 1 : 0,
+                    (newOrder.shipping_address ?? newOrder.country_of_transaction) == "United Kingdom" ? 1 : 0,
+                    // Get from form
+                    newOrder.bank == "HSBC" ? 1 : 0,
+                    newOrder.bank == "Halifax" ? 1 : 0,
+                    newOrder.bank == "Lloyds" ? 1 : 0,
+                    newOrder.bank == "Metro" ? 1 : 0,
+                    newOrder.bank == "Monzo" ? 1 : 0,
+                    newOrder.bank == "RBS" ? 1 : 0,
+                    // Get from form
+                    newOrder.type_of_card == "Visa" ? 1 : 0,
+                    // fraudValue
+                };
                     var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
-
                     var inputs = new List<NamedOnnxValue>
-                        {
-                            NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
-                        };
-
+                {
+                    NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
+                };
                     using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form (i.e. class_type 1-7)
                     {
                         var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
@@ -490,11 +483,13 @@ namespace INTEXII.Controllers
                             // Use the prediction to get the animal type from the dictionary
                             ViewBag.Prediction = prediction;
                             newOrder.fraud = (byte?)prediction[0];
+                            predictedFraudValue = (byte)prediction[0];
                         }
                         else
                         {
                             ViewBag.Prediction = "Error: Unable to make a prediction.";
                             newOrder.fraud = (byte?)2;
+                            predictedFraudValue = 2;
                         }
                     }
                 }
@@ -502,20 +497,17 @@ namespace INTEXII.Controllers
                 {
                     _logger.LogError($"Error during prediction: {ex.Message}");
                     ViewBag.Prediction = "Error during prediction.";
+                    predictedFraudValue = 2;
                 }
-
                 // Save new order to get OrderID
                 context.Orders.Add(newOrder);
                 await context.SaveChangesAsync();
-
                 // Get the current user's cart items
                 var userId = _userManager.GetUserId(User);
                 var cartItems = await context.CartProducts.Where(cp => cp.user_Id == userId).ToListAsync();
-
                 // Get the max line item ID and increment for new line items
                 var maxLineItemId = await context.LineItems.MaxAsync(li => (int?)li.line_id) ?? 0;
                 var newLineItemId = (int)(maxLineItemId + 1);
-
                 // Convert cart items to line items
                 foreach (var item in cartItems)
                 {
@@ -527,23 +519,23 @@ namespace INTEXII.Controllers
                         qty = (byte)item.quantity,
                         rating = 0 // Hard coded rating
                     };
-
                     context.LineItems.Add(lineItem);
                 }
-
                 // Clear the cart
                 context.CartProducts.RemoveRange(cartItems);
                 await context.SaveChangesAsync();
-
-
                 // Check fraud prediction and redirect to different routes
-                if (newOrder.fraud == 1)
+                if (predictedFraudValue == 1)
                 {
                     return RedirectToAction("OrderHold");
                 }
-                else
+                else if (predictedFraudValue == 0)
                 {
                     return RedirectToAction("OrderConfirmation");
+                }
+                else
+                {
+                    return RedirectToAction("Error");
                 }
             }
             catch (Exception ex)
@@ -687,19 +679,23 @@ namespace INTEXII.Controllers
 
                 foreach (var order in orders)
                 {
-                    // Calculate Days since January 1, 2022
-                    var january1_2022 = new DateOnly(2022, 1, 1);
+                    // Get the current date
+                    DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+                    DateTime todayDateTime = today.ToDateTime(TimeOnly.MinValue);
                     var recordDate = order.date.HasValue ? new DateTime(order.date.Value.Year, order.date.Value.Month, order.date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
-                    var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+                    DateTime recordDateTime = recordDate;
+                    TimeSpan daysDifference = recordDateTime.Subtract(todayDateTime);
+                    int numberOfDays = daysDifference.Days;
 
                     var input = new List<float>
             {
                 (float)order.customer_ID,
+                numberOfDays,
                 (float)order.time,
                 // fix amount if it's null
                 (float)(order.amount ?? 0),
                 // fix date
-                daysSinceJan2022,
+                
                 // Check the dummy coded data
                 order.day_of_week == "Mon" ? 1 : 0,
                 order.day_of_week == "Sat" ? 1 : 0,
@@ -726,9 +722,8 @@ namespace INTEXII.Controllers
                 order.bank == "Monzo" ? 1 : 0,
                 order.bank == "RBS" ? 1 : 0,
                 order.type_of_card == "Visa" ? 1 : 0,
-                (float)(order.fraud ?? 0.0)
+                //(float)(order.fraud ?? 0.0)
             };
-
                     var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
                     var inputs = new List<NamedOnnxValue>
             {

@@ -1,0 +1,22 @@
+{
+  "dependencies": {
+    "secrets1": {
+      "type": "secrets",
+      "connectionId": "VaultUri"
+    },
+    "mssql1": {
+      "type": "mssql",
+      "connectionId": "brickwellconnection"
+    },
+    "secrets2": {
+      "type": "secrets",
+      "connectionId": "VaultUri",
+      "dynamicId": null
+    },
+    "appConfig1": {
+      "type": "appConfig",
+      "connectionId": "AppConfig",
+      "dynamicId": null
+    }
+  }
+}
