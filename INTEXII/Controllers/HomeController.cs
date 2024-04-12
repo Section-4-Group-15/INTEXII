@@ -31,7 +31,7 @@ namespace INTEXII.Controllers
 
             try
             {
-                _session = new InferenceSession("fraud_model.onnx");
+                _session = new InferenceSession("fraud_model_4.0.onnx");
                 _logger.LogInformation("ONNX model loaded successfully");
             }
             catch (Exception ex)
@@ -681,40 +681,40 @@ namespace INTEXII.Controllers
                     var input = new List<float>
             {
                 (float)order.customer_ID,
+                daysSinceJan2022,
                 (float)order.time,
                 // fix amount if it's null
                 (float)(order.amount ?? 0),
                 // fix date
-                daysSinceJan2022,
+                
                 // Check the dummy coded data
-                order.day_of_week == "Mon" ? 1 : 0,
-                order.day_of_week == "Sat" ? 1 : 0,
-                order.day_of_week == "Sun" ? 1 : 0,
-                order.day_of_week == "Thu" ? 1 : 0,
-                order.day_of_week == "Tue" ? 1 : 0,
-                order.day_of_week == "Wed" ? 1 : 0,
-                order.entry_mode == "Pin" ? 1 : 0,
-                order.entry_mode == "Tap" ? 1 : 0,
-                order.type_of_transaction == "Online" ? 1 : 0,
-                order.type_of_transaction == "POS" ? 1 : 0,
-                order.country_of_transaction == "India" ? 1 : 0,
-                order.country_of_transaction == "Russia" ? 1 : 0,
-                order.country_of_transaction == "USA" ? 1 : 0,
+                //order.day_of_week == "Mon" ? 1 : 0,
+                //order.day_of_week == "Sat" ? 1 : 0,
+                //order.day_of_week == "Sun" ? 1 : 0,
+                //order.day_of_week == "Thu" ? 1 : 0,
+                //order.day_of_week == "Tue" ? 1 : 0,
+                //order.day_of_week == "Wed" ? 1 : 0,
+                //order.entry_mode == "Pin" ? 1 : 0,
+                //order.entry_mode == "Tap" ? 1 : 0,
+                //order.type_of_transaction == "Online" ? 1 : 0,
+                //order.type_of_transaction == "POS" ? 1 : 0,
+                //order.country_of_transaction == "India" ? 1 : 0,
+                //order.country_of_transaction == "Russia" ? 1 : 0,
+                //order.country_of_transaction == "USA" ? 1 : 0,
                 order.country_of_transaction == "United Kingdom" ? 1 : 0,
-                (order.shipping_address ?? order.country_of_transaction) == "India" ? 1 : 0,
-                (order.shipping_address ?? order.country_of_transaction) == "Russia" ? 1 : 0,
-                (order.shipping_address ?? order.country_of_transaction) == "USA" ? 1 : 0,
+                //(order.shipping_address ?? order.country_of_transaction) == "India" ? 1 : 0,
+                //(order.shipping_address ?? order.country_of_transaction) == "Russia" ? 1 : 0,
+                //(order.shipping_address ?? order.country_of_transaction) == "USA" ? 1 : 0,
                 (order.shipping_address ?? order.country_of_transaction) == "United Kingdom" ? 1 : 0,
-                order.bank == "HSBC" ? 1 : 0,
-                order.bank == "Halifax" ? 1 : 0,
-                order.bank == "Lloyds" ? 1 : 0,
-                order.bank == "Metro" ? 1 : 0,
-                order.bank == "Monzo" ? 1 : 0,
-                order.bank == "RBS" ? 1 : 0,
-                order.type_of_card == "Visa" ? 1 : 0,
-                (float)(order.fraud ?? 0.0)
+                //order.bank == "HSBC" ? 1 : 0,
+                //order.bank == "Halifax" ? 1 : 0,
+                //order.bank == "Lloyds" ? 1 : 0,
+                //order.bank == "Metro" ? 1 : 0,
+                //order.bank == "Monzo" ? 1 : 0,
+                //order.bank == "RBS" ? 1 : 0,
+                //order.type_of_card == "Visa" ? 1 : 0,
+                //(float)(order.fraud ?? 0.0)
             };
-
                     var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
                     var inputs = new List<NamedOnnxValue>
             {
