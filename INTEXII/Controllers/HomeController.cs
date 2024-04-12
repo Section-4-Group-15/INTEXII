@@ -36,7 +36,7 @@ namespace INTEXII.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error leading the ONNX model.");
+                _logger.LogError($"Error loading the ONNX model: {ex.Message}");
             }
         }
 
