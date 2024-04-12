@@ -173,12 +173,12 @@
                                     <div class="d-flex flex-column align-items-end">
                                         <h2 class="text-success">$@product.Price</h2>
 
-                                        <!-- Updated Add to Cart Button -->
+@*                                         <!-- Updated Add to Cart Button -->
                                         <form id="addToCartForm" asp-controller="Home" asp-action="AddToCart" method="post">
                                             <input type="hidden" name="productId" value="@Model.Products.FirstOrDefault()?.product_ID" />
                                             <input type="hidden" name="quantity" value="1" />
                                             <button type="submit" class="btn btn-primary" id="addToCartButton">Add to Cart</button>
-                                        </form>
+                                        </form> *@
 
                                         <a href="@Url.Action("IndProducts", new { id = product.product_ID })" class="btn btn-secondary mt-2">
                                             View Details
