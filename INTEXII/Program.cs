@@ -219,7 +219,7 @@ app.MapControllerRoute(
     defaults: new { controller = "Home", action = "Cart" });
 
 app.MapControllerRoute(
-    name: "addToCart",
+    name: "AddToCart",
     pattern: "cart/add/{productId:int}/{quantity:int}",
     defaults: new { controller = "Home", action = "AddToCart" });
 
