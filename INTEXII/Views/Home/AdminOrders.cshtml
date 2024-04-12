@@ -51,7 +51,7 @@
                             <td>@order.Shipping_Address</td>
                             <td>@order.Bank</td>
                             <td>@order.Type_Of_Card</td>
-                            <td>@order.Fraud</td>
+                            <td>@(order.Fraud == 1 ? "True" : "False")</td>
                             <td>@(prediction != null ? (prediction.Prediction_Outcome == 1 ? "True" : "False") : "Not predicted")</td>
                         </tr>
                     }
