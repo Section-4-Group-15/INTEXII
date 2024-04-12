@@ -378,6 +378,7 @@ namespace INTEXII.Controllers
                 if (!User.Identity.IsAuthenticated)
                     return RedirectToAction("Login");
 
+                // Get the max customer ID and increment for new customers
                 var maxCustomerId = await context.Customers.MaxAsync(c => (int?)c.customer_ID) ?? 0;
                 var newCustomerId = (int)(maxCustomerId + 1);
 
@@ -408,7 +409,7 @@ namespace INTEXII.Controllers
                     fraud = 1 // Enter the fraud prediction here
                 };
 
-                // Save new order to get OrderID
+                // Save new order
                 context.Orders.Add(newOrder);
                 await context.SaveChangesAsync();
 
