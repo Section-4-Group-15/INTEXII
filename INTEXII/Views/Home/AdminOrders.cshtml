@@ -38,20 +38,20 @@
                 <tbody>
                     @foreach (var order in Model.Item1)
                     {
-                        var prediction = Model.Item2.FirstOrDefault(p => p.Order_Id == order.Transaction_Id);
+                        var prediction = Model.Item2.FirstOrDefault(p => p.Order_Id == order.transaction_ID);
                         <tr>
-                            <td>@order.Transaction_Id</td>
-                            <td>@order.Customer_Id</td>
-                            <td>@order.Date?.ToString("yyyy-MM-dd")</td>
-                            <td>@order.Day_Of_Week</td>
-                            <td>@order.Time</td>
-                            <td>@order.Amount</td>
-                            <td>@order.Type_Of_Transaction</td>
-                            <td>@order.Country_Of_Transaction</td>
-                            <td>@order.Shipping_Address</td>
-                            <td>@order.Bank</td>
-                            <td>@order.Type_Of_Card</td>
-                            <td>@(order.Fraud == 1 ? "True" : "False")</td>
+                            <td>@order.transaction_ID</td>
+                            <td>@order.customer_ID</td>
+                            <td>@order.date?.ToString("yyyy-MM-dd")</td>
+                            <td>@order.day_of_week</td>
+                            <td>@order.time</td>
+                            <td>@order.amount</td>
+                            <td>@order.type_of_transaction</td>
+                            <td>@order.country_of_transaction</td>
+                            <td>@order.shipping_address</td>
+                            <td>@order.bank</td>
+                            <td>@order.type_of_card</td>
+                            <td>@(order.fraud == 1 ? "True" : "False")</td>
                             <td>@(prediction != null ? (prediction.Prediction_Outcome == 1 ? "True" : "False") : "Not predicted")</td>
                         </tr>
                     }

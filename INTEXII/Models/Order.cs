@@ -7,29 +7,29 @@ namespace INTEXII.Models;
 public partial class Order
 {
     [Key]
-    public long Transaction_Id { get; set; }
+    public long transaction_ID { get; set; }
     
-    public long Customer_Id { get; set; }
+    public long customer_ID { get; set; }
 
-    public DateOnly? Date { get; set; }
+    public DateOnly? date { get; set; }
 
-    public string? Day_Of_Week { get; set; }
+    public string? day_of_week { get; set; }
 
-    public byte? Time { get; set; }
+    public byte? time { get; set; }
 
-    public string? Entry_Mode { get; set; }
+    public string? entry_mode { get; set; }
 
-    public short? Amount { get; set; }
+    public short? amount { get; set; }
 
-    public string? Type_Of_Transaction { get; set; }
+    public string? type_of_transaction { get; set; }
 
-    public string? Country_Of_Transaction { get; set; }
+    public string? country_of_transaction { get; set; }
 
-    public string? Shipping_Address { get; set; }
+    public string? shipping_address { get; set; }
 
-    public string? Bank { get; set; }
+    public string? bank { get; set; }
 
-    public string? Type_Of_Card { get; set; }
+    public string? type_of_card { get; set; }
 
-    public byte? Fraud { get; set; }
+    public byte? fraud { get; set; }
 }
