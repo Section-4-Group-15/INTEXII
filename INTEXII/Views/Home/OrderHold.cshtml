@@ -1,7 +1,14 @@
 ﻿@{
-    ViewData["Title"] = "Order Confirmation";
+    ViewData["Title"] = "Order Hold";
 }
-@using System.Web
+
 @model ProjectsListViewModel
 
-<h3>This is the confirmation page for good orders.</h3>
+
+<h2>Thank you!</h2>
+
+<h3>Your order has been received! An admin is reviewing your order and you will receive an email with the estimated ship date.</h3>
+
+<div>
+    <a asp-controller="Home" asp-action="Index">Back to Home</a>
+</div>
