@@ -371,7 +371,7 @@ namespace INTEXII.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> SubmitOrder(string address, string bank, string cardType)
+        public async Task<IActionResult> SubmitOrder(string address, string bank, string cardType, int purchaseAmount)
         {
             try
             {
@@ -380,10 +380,6 @@ namespace INTEXII.Controllers
 
                 var maxCustomerId = await context.Customers.MaxAsync(c => (int?)c.customer_ID) ?? 0;
                 var newCustomerId = (int)(maxCustomerId + 1);
-
-                //
-                // Model Logic to get the fraud prediction
-                //
 
                 // Create a new order record
                 var newOrder = new Order
@@ -397,6 +393,101 @@ namespace INTEXII.Controllers
                     shipping_address = address,
                     fraud = 1 // Enter the fraud prediction here
                 };
+
+                //Calculate Days since January 1, 2022
+                var january1_2022 = new DateOnly(2022, 1, 1);
+                var recordDate = newOrder.date.HasValue ? new DateTime(newOrder.date.Value.Year, newOrder.date.Value.Month, newOrder.date.Value.Day) : DateTime.MinValue; // Convert DateOnly to DateTime
+                var daysSinceJan2022 = (recordDate - new DateTime(january1_2022.Year, january1_2022.Month, january1_2022.Day)).Days;
+
+                // Calculate the Current Day of the week
+                var dayOfWeekEnum = DateTime.Now.DayOfWeek; // Get the current day of the week as an enum
+                var dayOfWeekString = dayOfWeekEnum.ToString();
+
+                // Calculate the Current Hour for the time field
+                int currentHour = DateTime.Now.Hour;
+
+                // Set the online order thing
+                var entryMode = "CVC";
+                var typeOfTransaction = "Online";
+
+                // Set the Country_of_Transaction
+                var countryOfTransaction = newOrder.shipping_address ?? newOrder.country_of_transaction;
+
+                // Hard code the fraud value because it doesn't matter, will get dropped in the prediction after selecting features.
+                var fraudValue = 0;
+
+                try
+                {
+                    var input = new List<float>
+                        {
+                            (float)newOrder.customer_ID, // need to get the customer id from something
+                            currentHour, // need to get the hour dynamically
+                            // fix amount if its null
+                            (float)(purchaseAmount), // Get the purchase amount from the form
+                            //fix date
+                            daysSinceJan2022,
+                            // Hard code based on the actual day
+                            dayOfWeekString == "Monday" ? 1 : 0,
+                            dayOfWeekString == "Saturday" ? 1 : 0,
+                            dayOfWeekString == "Sunday" ? 1 : 0,
+                            dayOfWeekString == "Thursday" ? 1 : 0,
+                            dayOfWeekString == "Tuesday" ? 1 : 0,
+                            dayOfWeekString == "Wednesday" ? 1 : 0,
+                            // Hard code to CVC since this is all online orders
+                            entryMode == "Pin" ? 1 : 0,
+                            entryMode == "Tap" ? 1 : 0,
+                            // Hard code to online since this is all online orders
+                            typeOfTransaction == "Online" ? 1 : 0,
+                            typeOfTransaction == "POS" ? 1 : 0,
+                            // Get from the Shipping Address value, hard code
+                            countryOfTransaction == "India" ? 1 : 0,
+                            countryOfTransaction == "Russia" ? 1 : 0,
+                            countryOfTransaction == "USA" ? 1 : 0,
+                            countryOfTransaction == "United Kingdom" ? 1 : 0,
+                            // Get from form
+                            (newOrder.shipping_address ?? newOrder.country_of_transaction) == "India" ? 1 : 0,
+                            (newOrder.shipping_address ?? newOrder.country_of_transaction) == "Russia" ? 1 : 0,
+                            (newOrder.shipping_address ?? newOrder.country_of_transaction) == "USA" ? 1 : 0,
+                            (newOrder.shipping_address ?? newOrder.country_of_transaction) == "United Kingdom" ? 1 : 0,
+                            // Get from form
+                            newOrder.bank == "HSBC" ? 1 : 0,
+                            newOrder.bank == "Halifax" ? 1 : 0,
+                            newOrder.bank == "Lloyds" ? 1 : 0,
+                            newOrder.bank == "Metro" ? 1 : 0,
+                            newOrder.bank == "Monzo" ? 1 : 0,
+                            newOrder.bank == "RBS" ? 1 : 0,
+                            // Get from form
+                            newOrder.type_of_card == "Visa" ? 1 : 0,
+                            fraudValue
+                        };
+                    var inputTensor = new DenseTensor<float>(input.ToArray(), new[] { 1, input.Count });
+
+                    var inputs = new List<NamedOnnxValue>
+                        {
+                            NamedOnnxValue.CreateFromTensor("float_input", inputTensor)
+                        };
+
+                    using (var results = _session.Run(inputs)) // makes the prediction with the inputs from the form (i.e. class_type 1-7)
+                    {
+                        var prediction = results.FirstOrDefault(item => item.Name == "output_label")?.AsTensor<long>().ToArray();
+                        if (prediction != null && prediction.Length > 0)
+                        {
+                            // Use the prediction to get the animal type from the dictionary
+                            ViewBag.Prediction = prediction;
+                            newOrder.fraud = (byte?)prediction[0];
+                        }
+                        else
+                        {
+                            ViewBag.Prediction = "Error: Unable to make a prediction.";
+                            newOrder.fraud = (byte?)2;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error during prediction: {ex.Message}");
+                    ViewBag.Prediction = "Error during prediction.";
+                }
 
                 // Save new order to get OrderID
                 context.Orders.Add(newOrder);
