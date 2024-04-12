@@ -371,15 +371,62 @@ namespace INTEXII.Controllers
 
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> SubmitOrder(string address)
+        public async Task<IActionResult> SubmitOrder(string address, string bank, string cardType)
         {
             try
             {
-                // Logic to create an order record goes here
-                _logger.LogInformation($"Order submitted for address: {address}"); // DEBUG
+                if (!User.Identity.IsAuthenticated)
+                    return RedirectToAction("Login");
 
-                // Implement order confirmation popup or redirect as needed
-                return RedirectToAction("OrderConfirmation");
+                var maxCustomerId = await context.Customers.MaxAsync(c => (int?)c.customer_ID) ?? 0;
+                var newCustomerId = (int)(maxCustomerId + 1);
+
+                // Model Logic
+
+
+
+                // Create a new order record
+                var newOrder = new Order
+                {
+                    Customer_Id = newCustomerId,
+                    Date = DateOnly.FromDateTime(DateTime.Now),
+                    Bank = bank,
+                    Type_Of_Card = cardType,
+                    Country_Of_Transaction = address, 
+                    Shipping_Address = address,
+                    Fraud = 0 // Assume not fraud initially, fraud check could be updated later based on ML model prediction
+                };
+
+                // Save new order to get OrderID
+                context.Orders.Add(newOrder);
+                await context.SaveChangesAsync();
+
+                var userId = _userManager.GetUserId(User);
+                var cartItems = await context.CartProducts.Where(cp => cp.user_Id == userId).ToListAsync();
+
+                // Convert cart items to line items
+                foreach (var item in cartItems)
+                {
+                    var lineItem = new LineItem
+                    {
+                        TransactionId = (int)newOrder.Transaction_Id,
+                        ProductId = (byte)item.product_Id,
+                        Qty = (byte)item.quantity,
+                        Rating = 0 // Hard coded rating
+                    };
+
+                    context.LineItems.Add(lineItem);
+                }
+
+                // Clear the cart
+                context.CartProducts.RemoveRange(cartItems);
+                await context.SaveChangesAsync();
+
+
+                // Check fraud prediction and redirect to different routes
+
+                // Redirect to a confirmation page or view
+                return RedirectToAction("OrderConfirmation", new { orderId = newOrder.Transaction_Id });
             }
             catch (Exception ex)
             {
@@ -387,6 +434,7 @@ namespace INTEXII.Controllers
                 return RedirectToAction("Error");
             }
         }
+
 
 
         // Admin Controller
