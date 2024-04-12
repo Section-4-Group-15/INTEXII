@@ -127,6 +127,73 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllerRoute(
+    name: "contact",
+    pattern: "contact",
+    defaults: new { controller = "Home", action = "Contact" });
+
+app.MapControllerRoute(
+    name: "about",
+    pattern: "about",
+    defaults: new { controller = "Home", action = "About" });
+
+app.MapControllerRoute(
+    name: "privacy",
+    pattern: "privacy",
+    defaults: new { controller = "Home", action = "Privacy" });
+
+// Enhanced Products route with pagination and filtering
+app.MapControllerRoute(
+    name: "products",
+    pattern: "products/{pageNum?}",
+    defaults: new { controller = "Home", action = "Products" });
+
+app.MapControllerRoute(
+    name: "filteredProducts",
+    pattern: "products/{pageNum?}/{categories?}/{colors?}",
+    defaults: new { controller = "Home", action = "Products" });
+
+app.MapControllerRoute(
+    name: "indProducts",
+    pattern: "Product/{id:int}",
+    defaults: new { controller = "Home", action = "IndProducts" });
+
+// Cart management routes
+app.MapControllerRoute(
+    name: "viewCart",
+    pattern: "cart",
+    defaults: new { controller = "Home", action = "Cart" });
+
+app.MapControllerRoute(
+    name: "addToCart",
+    pattern: "cart/add/{productId:int}/{quantity:int}",
+    defaults: new { controller = "Home", action = "AddToCart" });
+
+app.MapControllerRoute(
+    name: "updateCart",
+    pattern: "cart/update/{productId:int}/{quantity:int}",
+    defaults: new { controller = "Home", action = "UpdateQuantity" });
+
+app.MapControllerRoute(
+    name: "removeFromCart",
+    pattern: "cart/remove/{productId:int}",
+    defaults: new { controller = "Home", action = "RemoveFromCart" });
+
+app.MapControllerRoute(
+    name: "adminProducts",
+    pattern: "AdminTools/ManageProducts",
+    defaults: new { controller = "Home", action = "AdminProducts" });
+
+app.MapControllerRoute(
+    name: "adminUsers",
+    pattern: "AdminTools/ManageUsers",
+    defaults: new { controller = "Home", action = "AdminUsers" });
+
+app.MapControllerRoute(
+    name: "adminOrders",
+    pattern: "AdminTools/ManageOrders",
+    defaults: new { controller = "Home", action = "AdminOrders" });
+
 // Define custom routes
 app.MapControllerRoute(
     name: "default",
