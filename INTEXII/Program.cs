@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).AddEnvironmentVariables();
 var keyVaultEndpoint = new Uri(Environment.GetEnvironmentVariable("VaultUri"));
-if (builder.Environment.IsDevelopment()) {builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());}
+if (builder.Environment.IsProduction()) {builder.Configuration.AddAzureKeyVault(keyVaultEndpoint, new DefaultAzureCredential());}
 var services = builder.Services;
 var configuration = builder.Configuration;
 
@@ -88,7 +88,7 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.HttpOnly = HttpOnlyPolicy.Always;
 });
 
-if (builder.Environment.IsDevelopment())
+if (builder.Environment.IsProduction())
 {
     //Add Azure App Configuration to the container.
     var azAppConfigConnection = builder.Configuration["AppConfig"];
